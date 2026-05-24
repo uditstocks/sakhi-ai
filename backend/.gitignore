@@ -64,3 +64,8 @@ logs/
 dist/
 build/
 out/
+
+#gcloud key
+
+gcloud_key.json
+*.json
