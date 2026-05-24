@@ -1,0 +1,95 @@
+{
+   "checksum": "a804574b2098db98a8433c9260735907",
+   "roots": {
+      "bookmark_bar": {
+         "children": [  ],
+         "date_added": "13424100933621366",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Favorites bar",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "other": {
+         "children": [ {
+            "date_added": "13315210873605559",
+            "date_last_used": "0",
+            "guid": "ca947028-57db-4a34-9a2c-5c00152f74b8",
+            "id": "7",
+            "name": "Dashboard | Aakash Digital",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://digital.aakash.ac.in/dashboard",
+            "visit_count": 0
+         }, {
+            "date_added": "13323092147297147",
+            "date_last_used": "13422990555244446",
+            "guid": "d55fb718-cdc2-4b8f-aef6-3847def393c3",
+            "id": "8",
+            "name": "Abhinay Maths",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://abhinaymaths.in/",
+            "visit_count": 1
+         }, {
+            "date_added": "13333019252779966",
+            "date_last_used": "0",
+            "guid": "5d6a8724-9323-4bf3-ae6c-4cbddee81500",
+            "id": "9",
+            "name": "Watch Mashle: Magic and Muscles English Sub/Dub online Free on Aniwatch.to",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://aniwatch.to/watch/mashle-magic-and-muscles-18339?ep=101252",
+            "visit_count": 0
+         }, {
+            "date_added": "13423217956837255",
+            "date_last_used": "0",
+            "guid": "a06b4fdc-527c-4c31-94f7-eb493bc26fc0",
+            "id": "10",
+            "name": "*FR (kit)_ 2025-2026.pdf",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "file:///C:/Users/Hp/Downloads/FR%20(kit)_%202025-2026.pdf",
+            "visit_count": 1
+         } ],
+         "date_added": "13424100933621366",
+         "date_last_used": "0",
+         "date_modified": "13423217956837255",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Other favorites",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13424100933621366",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Mobile favorites",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "workspaces_v2": {
+         "children": [  ],
+         "date_added": "13424100933621366",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "75aa6670-344f-549d-b742-660f029506ab",
+         "id": "5",
+         "name": "Workspaces",
+         "source": "unknown",
+         "type": "folder"
+      }
+   },
+   "sync_metadata": "CjEKDgiIgQISCK3+bCWeAQAAEgAqGHpuMFZrNWJsRCs3RmZ3NzAzTEFMakE9PUgDoAYHEo4BCAUSiQEKHHdSQnJaTCs2UEE5YXZLZ2pOUDdKWERMY2Z2cz0SJGM3MDEzMTE2LWQzMWYtNWFkNS1hODg2LTNmNDdkNWI4YzcyNRgAIAAoADDYnK+WpjM405+vlqYzQNOfr5amM0ocbm14NjVzUUR2eEk4VGdFZXYrQStudHRvU240PVoAZQAAAADCPgJgABKOAQgDEokBChxuamdEdTg4ZUNydlhwODZwRDdmSEdjcUZwODg9EiQxMGJhZmM3NS1hMmJhLTUwMTgtYWY0YS1iZTdhNGJjZDE0ZTAYACAAKAAw4tHU6bIwONvTnO72L0Db05zu9i9KHHl6TkIwMWNuNTRBN2NSVTB1VCsvUGdtVHRVbz1aAGUAAAAAwj4CYAASrQEICRKoAQocM3RkKzQyMGlWRmJNRTE5ZmN0UkFTenpBS2NVPRIkNWQ2YTg3MjQtOTMyMy00YmYzLWFlNmMtNGNiZGRlZTgxNTAwGAAgACgAMK+VqKmSMTiAmKipkjFAgJioqZIxShx0dDNXZGk2MFRKR05wWk9lbzd4Y0ZXK2ZwTHM9Wh8iHbBJUWVaR0ZQWEx4c2FSN3JRUHptVkZJMEFzTGc9ZZE7oOnCPgJgBRKOAQgBEokBChx5eEovNmZ2a2VjcjdrcDVFUXpCNHRXTHBkYkU9EiQ2ZjM0MTc0ZS1iNzU2LTViMGQtYTU2NS04OGVlM2JjNWZmMTkYACAAKAAw4tHU6bIwOI3TnO72L0CN05zu9i9KHGFSQ1dMZ2hGOWI1SW5xS0lEdnVKL2p2UWtGYz1aAGUAAAAAwj4CYAASrQEIChKoAQocRFJJSWgrMHBYVmVSdmw4VTlNVDN3V0NXM3pFPRIkYTA2YjRmZGMtNTI3Yy00YzMxLTk0ZjctZWI0OTNiYzI2ZmMwGAAgACgAMKz9s6viMziggLSr4jNAoIC0q+IzShxsdklNZ2EzRWY5eitLREpMU3FPUGFrankraEE9Wh8iHdgxT0x3L3pJVy9SaXBESDhmMURVejVLNzFwMUE9ZXdwbKPCPgJgBRKsAQgIEqcBChx6SjZUYUJCbjk3dmdCNWtOUEg0M2tUc2NSNHM9EiRkNTVmYjcxOC1jZGMyLTRiOGYtYWVmNi0zODQ3ZGVmMzkzYzMYACAAKAAwlsz8vuEzOPGY2avtMEDxmNmr7TBKHENHUDRvelBCaDBCeHlXNEhnRUFlZ0ErakVRaz1aHiIcYUVwdmE3YjYrMTc4ZFFYUU0vdkNFWHdkS05VPWWmpv1Wwj4CYAUSrAEIBxKnAQocUjRkNmhZUG1SQVUvTytzaWF0TnNsbUlBdmhnPRIkY2E5NDcwMjgtNTdkYi00YTM0LTlhMmMtNWMwMDE1MmY3NGI4GAAgACgAMMH9zv3PMDimzM79zzBApszO/c8wShw0M3d2UUhzUHlFUXQ4d3FtL3JVT2N0NVpNbW89Wh4iHDErUTlaK1NKNmtSSDJlaU5MOEFlOFNxWVRrcz1l4jgxDsI+AmAFEo4BCAISiQEKHFljU1RvbnZFU1B3cUNzNEwyY3JWaHY2OEw5OD0SJDYxYjMwOTViLTQyZGEtNWIxNS04MjY3LTJjOTI5NzllYmQyNBgAIAAoADDi0dTpsjA4ndOc7vYvQJ3TnO72L0ocb1BWa2h3QlJiVjY1S0NXUjIrSU9OSFdvT3U4PVoAZQAAAADCPgJgADAAOAA=",
+   "version": 1
+}
