@@ -4,6 +4,8 @@ from whisper_module import transcribe_audio  #    converts speech → text using
 from chromadb_module import search_documents #    Performs vector search (RAG system) using ChromaDB
 from tts_module import text_to_speech
 from fastapi.responses import Response
+from langchain_module import classify_intent
+from gemini_module import ask_gemini, ask_gemini_with_intent
 
 #    File handling ,    UUID = unique filenames for uploads
 import shutil
@@ -56,25 +58,30 @@ def get_rag_context(query: str) -> str: #This function gets relevant knowledge f
 # =========================
 # CHAT ENDPOINT (FIXED)
 # =========================
-@app.post("/chat") #This handles normal text queries.
+@app.post("/chat")
 def chat(data: dict = Body(...)):
     try:
-        query = data.get("query", "").strip() #get input 
-
+        query = data.get("query", "").strip()
         if not query:
-            return {"error": "Query is empty"} #validate input
+            return {"error": "Query is empty"}
 
-        print("QUERY:", query) #print for debugging
+        intent = classify_intent(query)
+        print(f"Intent: {intent}")
 
-        context = get_rag_context(query) #get RAG context
+        # SOS — bypass everything
+        if intent == "sos":
+            return {
+                "intent": "sos",
+                "response": "EMERGENCY: Aapka SOS alert bheja ja raha hai. Aap safe rahein, madad aa rahi hai.",
+                "action": "TRIGGER_SOS"
+            }
 
-        if not context:
-            context = "No relevant agricultural data found."  #Prevents Gemini from getting empty context
-
-        response = ask_gemini(query, context) #Send to Gemini
+        context = get_rag_context(query)
+        response = ask_gemini_with_intent(query, context, intent, language="hi")
 
         return {
-            "response": response,   #return response
+            "intent": intent,
+            "response": response,
             "context_used": context
         }
 
@@ -99,21 +106,31 @@ async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
     if not transcription:
         return {"error": "Could not transcribe audio"}
 
+    # Classify intent
+    intent = classify_intent(transcription)
+    print(f"Intent: {intent}")
+
+    # SOS — bypass everything, return emergency response immediately
+    if intent == "sos":
+        sos_text = "Aapka SOS alert bheja ja raha hai. Aap safe rahein, madad aa rahi hai."
+        audio_bytes = text_to_speech(sos_text, language_code=language)
+        if audio_bytes:
+            return Response(content=audio_bytes, media_type="audio/mpeg")
+        return {"transcription": transcription, "intent": "sos", "response": sos_text}
+
+    # For all other intents — RAG + Gemini with intent-aware prompting
     context = get_rag_context(transcription)
-    response_text = ask_gemini(transcription, context=context)
+    response_text = ask_gemini_with_intent(transcription, context, intent, language)
 
     audio_bytes = text_to_speech(response_text, language_code=language)
 
     if audio_bytes:
-        return Response(
-        content=audio_bytes,
-        media_type="audio/mpeg"
-    )
+        return Response(content=audio_bytes, media_type="audio/mpeg")
 
     return {
         "transcription": transcription,
-        "response": response_text,
-        "context_used": context
+        "intent": intent,
+        "response": response_text
     }
    
 
