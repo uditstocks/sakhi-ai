@@ -1,51 +1,53 @@
-import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+from google import genai
 
-genai.configure(api_key="YOUR_API_KEY")
+# Load .env relative to this file's directory to ensure it is found regardless of where uvicorn is started
+module_dir = os.path.dirname(os.path.abspath(__file__))
+dotenv_path = os.path.join(module_dir, ".env")
+load_dotenv(dotenv_path)
 
-model = genai.GenerativeModel("gemini-1.5-flash")
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    raise ValueError(
+        "GEMINI_API_KEY environment variable is missing or empty. "
+        f"Please check that GEMINI_API_KEY is defined in your .env file at: {dotenv_path}"
+    )
 
+# Instantiate the client with the validated API key
+client = genai.Client(api_key=api_key)
+
+# Use the latest free-tier model 'gemini-2.5-flash'
+MODEL = "gemini-2.5-flash"
 
 def ask_gemini(query: str, context: str = ""):
+    if context:
+        prompt = f"""
+You are Sakhi AI, an agricultural assistant for Indian farmers.
 
-    prompt = f"""
-You are "Sakhi AI", an expert agricultural assistant for Indian farmers.
-
-You provide:
-- simple explanations
-- practical farming advice
-- disease diagnosis help
-- step-by-step solutions
-
----
-
-RULES YOU MUST FOLLOW:
-1. Use ONLY the provided context to answer.
-2. If context is empty or irrelevant, say:
-   "I don’t have enough information in my knowledge base to answer this."
-3. Do NOT make up facts.
-4. Keep answers simple and farmer-friendly.
-5. Prefer bullet points when explaining steps.
-6. Be practical, not theoretical.
-7. If disease is mentioned, always include:
-   - cause
-   - symptoms
-   - solution
-   - prevention
-
----
+Use the given context to help answer the user's question. If the context doesn't cover the answer, use your general agricultural knowledge but note that it's from general knowledge.
 
 CONTEXT:
 {context}
 
----
-
-USER QUESTION:
+QUESTION:
 {query}
+"""
+    else:
+        prompt = f"""
+You are Sakhi AI, an agricultural assistant for Indian farmers.
 
----
-
-ANSWER:
+QUESTION:
+{query}
 """
 
-    response = model.generate_content(prompt)
-    return response.text
+    try:
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt
+        )
+        if response and response.text:
+            return response.text
+        return "I could not generate a response. Please try again."
+    except Exception as e:
+        return f"Error communicating with Gemini API: {e}"
