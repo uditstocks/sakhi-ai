@@ -1,0 +1,6 @@
+echo ".env" >> .gitignore
+echo "*.env" >> .gitignore
+echo ".DS_Store" >> .gitignore
+echo "node_modules/" >> .gitignore
+echo "__pycache__/" >> .gitignore
+echo "*.pyc" >> .gitignore
