@@ -2,7 +2,8 @@ from fastapi import FastAPI, UploadFile, File, Body #    FastAPI framework, Hand
 from gemini_module import ask_gemini # custom function to call Google Gemini LLM
 from whisper_module import transcribe_audio  #    converts speech → text using Whisper
 from chromadb_module import search_documents #    Performs vector search (RAG system) using ChromaDB
-
+from tts_module import text_to_speech
+from fastapi.responses import Response
 
 #    File handling ,    UUID = unique filenames for uploads
 import shutil
@@ -85,37 +86,36 @@ def chat(data: dict = Body(...)):
 # =========================
 # VOICE ENDPOINT (SAFE)
 # =========================
-@app.post("/voice") #Handles audio input.
-async def voice_chat(file: UploadFile = File(...)):
-    try:
-        ext = os.path.splitext(file.filename)[1] or ".wav" #Save audio file,     Generates unique filename * Prevents overwrite
-        file_path = f"uploads/{uuid.uuid4()}{ext}"
+@app.post("/voice")
+async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
+    ext = os.path.splitext(file.filename)[1] or ".wav"
+    file_path = f"uploads/{uuid.uuid4()}{ext}"
 
-        with open(file_path, "wb") as buffer:  #Saves uploaded audio locally
-            shutil.copyfileobj(file.file, buffer)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
-        transcription = transcribe_audio(file_path) #Whisper converts audio → text
+    transcription = transcribe_audio(file_path)
 
-        if not transcription:
-            return {"error": "Could not transcribe audio"}
+    if not transcription:
+        return {"error": "Could not transcribe audio"}
 
-        context = get_rag_context(transcription) #RAG search
+    context = get_rag_context(transcription)
+    response_text = ask_gemini(transcription, context=context)
 
-        if not context:
-            context = "No relevant agricultural data found."
+    audio_bytes = text_to_speech(response_text, language_code=language)
 
-        response = ask_gemini(transcription, context) #gemini response
+    if audio_bytes:
+        return Response(
+        content=audio_bytes,
+        media_type="audio/mpeg"
+    )
 
-        return {
-            "transcription": transcription, #return full pipeline result
-            "response": response,
-            "context_used": context
-        }
-
-    except Exception as e:
-        print("VOICE ERROR:", str(e))
-        return {"error": str(e)}
-
+    return {
+        "transcription": transcription,
+        "response": response_text,
+        "context_used": context
+    }
+   
 
 # =========================
 # DEBUG RAG ENDPOINT
