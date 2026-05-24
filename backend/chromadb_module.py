@@ -22,18 +22,33 @@ collection = client.get_or_create_collection(
 )
 
 # =========================
-# ADD DOCUMENT
+# ADD DOCUMENT & BATCHING
 # =========================
 def add_document(doc_id: str, text: str, metadata: dict = None):
 
     model = get_model()
     embedding = model.encode(text).tolist()
 
-    collection.add(
+    collection.upsert(
         documents=[text],
         ids=[doc_id],
         embeddings=[embedding],
         metadatas=[metadata or {}]
+    )
+
+def add_documents_batch(doc_ids: list[str], texts: list[str], metadatas: list[dict] = None):
+    if not doc_ids or not texts:
+        return
+    
+    model = get_model()
+    # Batch encode the texts for higher performance
+    embeddings = model.encode(texts).tolist()
+    
+    collection.upsert(
+        documents=texts,
+        ids=doc_ids,
+        embeddings=embeddings,
+        metadatas=metadatas or [{} for _ in texts]
     )
 
 # =========================
