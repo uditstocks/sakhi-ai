@@ -1,4 +1,5 @@
 import os
+from langsmith import traceable
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -6,6 +7,10 @@ from openai import OpenAI
 module_dir = os.path.dirname(os.path.abspath(__file__))
 dotenv_path = os.path.join(module_dir, ".env")
 load_dotenv(dotenv_path)
+print("Loading .env from:", dotenv_path)
+print("LANGSMITH_TRACING =", os.getenv("LANGSMITH_TRACING"))
+print("LANGSMITH_PROJECT =", os.getenv("LANGSMITH_PROJECT"))
+print("LANGSMITH_API_KEY exists =", bool(os.getenv("LANGSMITH_API_KEY")))
 
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 TEXT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
@@ -31,7 +36,7 @@ def _get_client() -> OpenAI:
     )
     return _client
 
-
+@traceable(name="generate_text")
 def generate_text(prompt: str, temperature: float = 0.7) -> str:
     """Single-turn text generation via NVIDIA OpenAI-compatible API."""
     response = _get_client().chat.completions.create(
@@ -44,7 +49,7 @@ def generate_text(prompt: str, temperature: float = 0.7) -> str:
         return content.strip()
     return ""
 
-
+@traceable(name="ask_llm")
 def ask_llm(query: str, context: str = "") -> str:
     if context:
         prompt = f"""
@@ -97,7 +102,7 @@ Answer the farming question simply and practically.
 Keep it under 3 sentences. Speak like a trusted community advisor.""",
 }
 
-
+@traceable(name="ask_llm_with_intent")
 def ask_llm_with_intent(
     query: str, context: str, intent: str, language: str = "hi"
 ) -> str:
