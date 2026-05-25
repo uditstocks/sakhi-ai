@@ -1,29 +1,18 @@
-import os #file paths and env var
-from dotenv import load_dotenv 
-from google import genai #Google’s Gemini SDK
-
-module_dir = os.path.dirname(os.path.abspath(__file__))
-dotenv_path = os.path.join(module_dir, ".env")
-load_dotenv(dotenv_path) #initiation, always load .env correctly from backend folder
-
-api_key = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=api_key) #client = gateway to AI model
+from llm_module import generate_text
 
 INTENTS = ["price", "disease", "scheme", "weather", "sos", "general"]
 
+
 def classify_intent(query: str) -> str:
-    
-    # SOS check first — highest priority, no AI needed
     sos_keywords = [
         "help", "danger", "unsafe", "scared", "attack",
         "bachao", "madad", "darr", "khatra", "emergency",
-        "sos", "save me", "bachao mujhe"
+        "sos", "save me", "bachao mujhe",
     ]
     query_lower = query.lower()
     if any(word in query_lower for word in sos_keywords):
         return "sos"
 
-    # Use Gemini to classify everything else
     prompt = f"""
 You are an intent classifier for an agricultural assistant app for Indian farmers.
 
@@ -42,14 +31,7 @@ No explanation. No punctuation. Just the single word.
 """
 
     try:
-        response = client.models.generate_content( #gemini api call 
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config={
-            "temperature": 0.1  #lower temperature = fewer random mislabels , otherwise  Gemini is using the default temperature (usually ~0.9 for generative models, but for flash classification it behaves closer to ~0.2–0.7 depending on backend settings)
-        }
-)
-        intent = response.text.strip().lower()
+        intent = generate_text(prompt, temperature=0.1).strip().lower()
         if intent in INTENTS:
             print(f"Intent classified: {intent}")
             return intent
