@@ -1,29 +1,30 @@
 import os
-import re
+import re   #Used to clean PDF text
 import argparse
-from pypdf import PdfReader
+from pypdf import PdfReader #extracts actual text from binary file
 from chromadb_module import add_documents_batch
 
-# =====================================================================
-# 1. PDF TEXT EXTRACTION
-# =====================================================================
-def load_pdf(file_path: str) -> str:
+
+#1. pdf text extraction
+
+def load_pdf(file_path: str) -> str: #extracts raw text
     """Extracts text from all pages of a PDF file using pypdf."""
     try:
-        reader = PdfReader(file_path)
-        full_text = []
-        for i, page in enumerate(reader.pages):
-            text = page.extract_text()
+        reader = PdfReader(file_path) #open pdf
+        full_text = [] #stores text from every page
+        for i, page in enumerate(reader.pages): #loop through all pages
+            text = page.extract_text() #extract text from current page
             if text:
-                full_text.append(text)
-        return "\n".join(full_text)
+                full_text.append(text) #store extracted page text
+        return "\n".join(full_text) #merge all pages into one large string
     except Exception as e:
         print(f"Error reading PDF {file_path}: {e}")
         return ""
 
-# =====================================================================
-# 2. TEXT CLEANING
-# =====================================================================
+
+
+# 2. text cleaning
+
 def clean_text(text: str) -> str:
     """Cleans extracted text by removing footers, excessive whitespace, and page markers."""
     # Remove headers/footers and page number patterns (e.g. Page 1 of 10, Page 5)
@@ -34,9 +35,11 @@ def clean_text(text: str) -> str:
     text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
 
-# =====================================================================
-# 3. SENTENCE-AWARE CHUNKING SYSTEM
-# =====================================================================
+
+
+
+#3. sentence aware chunking system
+
 def chunk_text(text: str, chunk_size_tokens: int = 400, overlap_tokens: int = 75) -> list[str]:
     """
     Splits text into chunks of 300-500 tokens (defaults to 400) with a 50-100 token overlap (defaults to 75).
@@ -47,12 +50,12 @@ def chunk_text(text: str, chunk_size_tokens: int = 400, overlap_tokens: int = 75
     sentence_endings = re.compile(r'(?<=[.!?])\s+')
     sentences = sentence_endings.split(text)
     
-    chunks = []
-    current_chunk_sentences = []
+    chunks = [] #stores final chunks
+    current_chunk_sentences = [] 
     current_chunk_tokens = 0
     
     for sentence in sentences:
-        sentence = sentence.strip()
+        sentence = sentence.strip() #remove trailing spaces
         if not sentence:
             continue
         
@@ -87,9 +90,11 @@ def chunk_text(text: str, chunk_size_tokens: int = 400, overlap_tokens: int = 75
         
     return chunks
 
-# =====================================================================
-# 4. METADATA AUTO-DETECTION
-# =====================================================================
+
+
+
+#extract metadata
+
 def extract_metadata(text: str, filename: str) -> dict:
     """Auto-detects crops, diseases, and tags keywords from chunk content."""
     text_lower = text.lower()
@@ -120,9 +125,11 @@ def extract_metadata(text: str, filename: str) -> dict:
     
     return metadata
 
-# =====================================================================
-# 5. MAIN INGESTION LOOP
-# =====================================================================
+
+
+
+#ingest folder
+
 def ingest_folder(folder_path: str):
     """Processes all PDFs in folder_path, chunks them, and stores them in ChromaDB."""
     if not os.path.exists(folder_path):
@@ -130,7 +137,8 @@ def ingest_folder(folder_path: str):
         os.makedirs(folder_path, exist_ok=True)
         print(f"Please drop your ICAR PDFs into {folder_path} and rerun.")
         return
-
+    
+     #find pdfs
     pdf_files = [f for f in os.listdir(folder_path) if f.lower().endswith(".pdf")]
     if not pdf_files:
         print(f"No PDF files found in '{folder_path}'. Please drop some PDFs there.")
@@ -138,6 +146,7 @@ def ingest_folder(folder_path: str):
 
     print(f"Found {len(pdf_files)} PDFs in '{folder_path}'. Starting ingestion...")
     
+    #loop through pdfs
     for filename in pdf_files:
         file_path = os.path.join(folder_path, filename)
         print(f"\nProcessing: {filename}...")
@@ -175,6 +184,8 @@ def ingest_folder(folder_path: str):
                 print(f"Successfully ingested all {len(doc_ids)} chunks for {filename}.")
             except Exception as e:
                 print(f"Error uploading batch to ChromaDB for {filename}: {e}")
+
+#main entry point
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ingest ICAR PDFs into ChromaDB.")
