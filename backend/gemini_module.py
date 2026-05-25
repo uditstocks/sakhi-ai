@@ -106,3 +106,70 @@ FARMER'S QUESTION:
         return "Mujhe maafi chahiye, main abhi jawab nahi de sakti. Dobara poochein."
     except Exception as e:
         return f"Error: {e}"
+    
+
+from PIL import Image
+import base64
+
+def analyze_leaf_image(image_path: str, language: str = "hi") -> str:
+    try:
+        lang_instruction = {
+            "hi": "Answer in simple Hindi.",
+            "te": "Answer in simple Telugu.",
+            "mr": "Answer in simple Marathi.",
+            "ta": "Answer in simple Tamil.",
+            "en": "Answer in simple English."
+        }.get(language, "Answer in simple Hindi.")
+
+        prompt = f"""
+You are Sakhi AI, an agricultural disease diagnosis assistant for Indian farmers.
+
+Look at this leaf image carefully and:
+1. Identify if there is any disease, pest damage, or nutrient deficiency
+2. Name the disease or problem in simple terms
+3. Give one immediate action the farmer can take today
+4. Mention which fungicide, pesticide, or remedy to use with dosage if applicable
+
+{lang_instruction}
+Keep answer under 4 sentences. Use simple words, no scientific jargon.
+If the image is not a plant or leaf, say "Kripya fasal ke patte ki photo bhejein."
+"""
+
+        # Read and encode image
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        import base64
+        encoded = base64.b64encode(image_bytes).decode("utf-8")
+
+        # Detect image type
+        ext = image_path.lower().split(".")[-1]
+        mime_map = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
+        mime_type = mime_map.get(ext, "image/jpeg")
+
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=[
+                {
+                    "parts": [
+                        {
+                            "inline_data": {
+                                "mime_type": mime_type,
+                                "data": encoded
+                            }
+                        },
+                        {
+                            "text": prompt
+                        }
+                    ]
+                }
+            ]
+        )
+
+        if response and response.text:
+            return response.text
+        return "Image analyse nahi ho saki. Dobara try karein."
+
+    except Exception as e:
+        print(f"Vision error: {e}")
+        return f"Image analyse mein error aaya: {e}"
