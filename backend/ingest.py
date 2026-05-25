@@ -20,4 +20,4 @@ add_document(
     {"crop": "wheat"}
 )
 
-print("✅ Ingestion completed")
+print(" Ingestion completed")

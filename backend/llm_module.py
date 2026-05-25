@@ -16,7 +16,7 @@ TEXT_MODEL = "meta/llama-3.1-8b-instruct"
 _trace_tags = ["sakhi-ai", "nvidia-nemotron"]
 _project = langsmith_setup.LANGSMITH_PROJECT
 
-_client: OpenAI | None = None
+_client: OpenAI | None = None #singleton client pattern
 
 
 def _get_client() -> OpenAI:
