@@ -1,10 +1,10 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/services/sakhi_api_service.dart';
+import 'package:sakhi_ai/services/audio_player_service.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 
@@ -24,8 +24,16 @@ class DiseaseTabPanel extends StatefulWidget {
 
 class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
   final _picker = ImagePicker();
+  final SakhiAudioPlayer _player = SakhiAudioPlayer();
+
   XFile? _image;
   bool _uploading = false;
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickFromCamera() async {
     final file = await _picker.pickImage(
@@ -33,36 +41,51 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
       maxWidth: 1280,
       imageQuality: 75,
     );
+
     if (file == null || !mounted) return;
+
     setState(() => _image = file);
+
     await _analyzeImage(file);
   }
 
   Future<void> _analyzeImage(XFile file) async {
     setState(() => _uploading = true);
+
     try {
-      final bytes = await file.readAsBytes();
-      final base64 = base64Encode(bytes);
-      final result = await widget.api.diagnoseCrop(
-        description: 'crop leaf photo',
-        imageBase64: base64,
+      // Send image to backend
+      final audioBytes = await widget.api.diagnoseCropImage(
+        imageFile: File(file.path),
+        languageCode: 'hi',
       );
+
       if (!mounted) return;
-      final diagnosis = result['diagnosis'] ?? result['reply'] ?? 'Analysis sent';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(diagnosis.toString()), behavior: SnackBarBehavior.floating),
-      );
-    } catch (_) {
+
+      if (audioBytes != null && audioBytes.isNotEmpty) {
+        await _player.playBytes(audioBytes);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No response from backend'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Diagnose error: $e');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Photo saved — connect backend for diagnosis'),
+            content: Text('Backend se connect nahi hua. Try again.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
     } finally {
-      if (mounted) setState(() => _uploading = false);
+      if (mounted) {
+        setState(() => _uploading = false);
+      }
     }
   }
 
@@ -89,7 +112,10 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
             Stack(
               alignment: Alignment.bottomRight,
               children: [
-                const Text('🌿', style: TextStyle(fontSize: 56)),
+                const Text(
+                  '🌿',
+                  style: TextStyle(fontSize: 56),
+                ),
                 Positioned(
                   right: 0,
                   bottom: 0,
@@ -135,7 +161,10 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
             const SizedBox(height: 4),
             Text(
               'Crop Disease',
-              style: SakhiTheme.poppins(fontSize: 15, color: SakhiColors.cream),
+              style: SakhiTheme.poppins(
+                fontSize: 15,
+                color: SakhiColors.cream,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -171,7 +200,10 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                icon: const Icon(Icons.camera_alt_rounded, size: 22),
+                icon: const Icon(
+                  Icons.camera_alt_rounded,
+                  size: 22,
+                ),
                 label: Text(
                   widget.strings.takePhoto,
                   style: SakhiTheme.hind(

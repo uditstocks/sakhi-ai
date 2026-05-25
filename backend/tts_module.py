@@ -1,5 +1,16 @@
 from google.cloud.texttospeech import TextToSpeechClient, SynthesisInput, VoiceSelectionParams, AudioConfig, AudioEncoding, SsmlVoiceGender
 import os
+from dotenv import load_dotenv
+
+# Load .env relative to this file's directory
+module_dir = os.path.dirname(os.path.abspath(__file__))
+dotenv_path = os.path.join(module_dir, ".env")
+load_dotenv(dotenv_path)
+
+# Resolve relative credentials path to absolute path
+creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+if creds and not os.path.isabs(creds):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(module_dir, creds)
 
 LANGUAGE_VOICE_MAP = {
     "hi": ("hi-IN", "hi-IN-Wavenet-A"),

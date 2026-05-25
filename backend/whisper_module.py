@@ -16,7 +16,12 @@ def convert_to_wav(input_path: str) -> str:
 def transcribe_audio(file_path: str) -> str:
     try:
         converted_path = convert_to_wav(file_path)
-        segments, info = model.transcribe(converted_path, beam_size=5,language="hi")
+        segments, info = model.transcribe(
+            converted_path,
+            beam_size=5,
+            language="hi",
+            vad_filter=False,
+        )
         transcript = " ".join([segment.text for segment in segments])
         print(f"Transcribed: {transcript}")
         print(f"Detected language: {info.language}")
