@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakhi_ai/main.dart';
 import 'package:sakhi_ai/screens/home_screen.dart';
 import 'package:sakhi_ai/services/sakhi_api_service.dart';
 

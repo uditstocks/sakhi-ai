@@ -2,7 +2,10 @@ import requests
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env relative to this file's directory
+module_dir = os.path.dirname(os.path.abspath(__file__))
+dotenv_path = os.path.join(module_dir, ".env")
+load_dotenv(dotenv_path)
 
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
