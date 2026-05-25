@@ -6,7 +6,8 @@ import os
 import uuid
 
 # ── Import your modules ────────────────────────────────────────────
-from gemini_module import ask_gemini, ask_gemini_with_intent, analyze_leaf_image
+from gemini_module import analyze_leaf_image
+from llm_module import ask_llm_with_intent
 from whisper_module import transcribe_audio
 from chromadb_module import search_documents
 from tts_module import text_to_speech
@@ -119,17 +120,17 @@ def chat(data: dict = Body(...)):
         if intent == "price":
             crop = extract_crop_from_query(query)
             live_price = get_mandi_price(crop)
-            response = ask_gemini_with_intent(query, live_price, intent, language)
+            response = ask_llm_with_intent(query, live_price, intent, language)
             return {"intent": intent, "response": response, "live_data": live_price}
 
         if intent == "weather":
             location = extract_location_from_query(query)
             live_weather = get_weather(location)
-            response = ask_gemini_with_intent(query, live_weather, intent, language)
+            response = ask_llm_with_intent(query, live_weather, intent, language)
             return {"intent": intent, "response": response, "live_data": live_weather}
 
         context = get_rag_context(query)
-        response = ask_gemini_with_intent(query, context, intent, language)
+        response = ask_llm_with_intent(query, context, intent, language)
         return {"intent": intent, "response": response}
 
     except Exception as e:
@@ -171,7 +172,7 @@ async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
     if intent == "price":
         crop = extract_crop_from_query(transcription)
         context = get_mandi_price(crop)
-        response_text = ask_gemini_with_intent(transcription, context, intent, language)
+        response_text = ask_llm_with_intent(transcription, context, intent, language)
         audio_bytes = text_to_speech(response_text, language_code=language)
         if audio_bytes:
             return Response(content=audio_bytes, media_type="audio/mpeg")
@@ -180,7 +181,7 @@ async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
     if intent == "weather":
         location = extract_location_from_query(transcription)
         context = get_weather(location)
-        response_text = ask_gemini_with_intent(transcription, context, intent, language)
+        response_text = ask_llm_with_intent(transcription, context, intent, language)
         audio_bytes = text_to_speech(response_text, language_code=language)
         if audio_bytes:
             return Response(content=audio_bytes, media_type="audio/mpeg")
@@ -188,7 +189,7 @@ async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
 
     # disease / scheme / general — RAG
     context = get_rag_context(transcription)
-    response_text = ask_gemini_with_intent(transcription, context, intent, language)
+    response_text = ask_llm_with_intent(transcription, context, intent, language)
     audio_bytes = text_to_speech(response_text, language_code=language)
     if audio_bytes:
         return Response(content=audio_bytes, media_type="audio/mpeg")
