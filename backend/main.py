@@ -1,9 +1,13 @@
+import langsmith_setup  # noqa: F401 — load LANGSMITH_* before traced imports
+
 from fastapi import FastAPI, UploadFile, File, Body
 from fastapi.responses import Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import os
 import uuid
+
+from langsmith import traceable
 
 # ── Import your modules ────────────────────────────────────────────
 from gemini_module import analyze_leaf_image
@@ -28,11 +32,20 @@ app.add_middleware(
 
 os.makedirs("uploads", exist_ok=True)
 
+_LANGSMITH_PROJECT = langsmith_setup.LANGSMITH_PROJECT
+_TRACE_TAGS = ["sakhi-ai"]
+
 
 # ══════════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
 # ══════════════════════════════════════════════════════════════════
 
+@traceable(
+    name="sakhi_rag_search",
+    run_type="retriever",
+    project_name=_LANGSMITH_PROJECT,
+    tags=_TRACE_TAGS,
+)
 def get_rag_context(query: str) -> str:
     try:
         results = search_documents(query)
@@ -91,12 +104,51 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "Sakhi AI"}
+    return {
+        "status": "ok",
+        "service": "Sakhi AI",
+        "langsmith_tracing": langsmith_setup.LANGSMITH_TRACING_ENABLED,
+        "langsmith_project": langsmith_setup.LANGSMITH_PROJECT,
+    }
 
 
 # ══════════════════════════════════════════════════════════════════
 # CHAT ENDPOINT — text in, text out
 # ══════════════════════════════════════════════════════════════════
+
+@traceable(
+    name="sakhi_chat",
+    run_type="chain",
+    project_name=_LANGSMITH_PROJECT,
+    tags=_TRACE_TAGS,
+)
+def process_chat(query: str, language: str) -> dict:
+    intent = classify_intent(query)
+    print(f"Intent: {intent}")
+
+    if intent == "sos":
+        return {
+            "intent": "sos",
+            "response": "EMERGENCY: Aapka SOS alert bheja ja raha hai. Aap safe rahein, madad aa rahi hai.",
+            "action": "TRIGGER_SOS",
+        }
+
+    if intent == "price":
+        crop = extract_crop_from_query(query)
+        live_price = get_mandi_price(crop)
+        response = ask_llm_with_intent(query, live_price, intent, language)
+        return {"intent": intent, "response": response, "live_data": live_price}
+
+    if intent == "weather":
+        location = extract_location_from_query(query)
+        live_weather = get_weather(location)
+        response = ask_llm_with_intent(query, live_weather, intent, language)
+        return {"intent": intent, "response": response, "live_data": live_weather}
+
+    context = get_rag_context(query)
+    response = ask_llm_with_intent(query, context, intent, language)
+    return {"intent": intent, "response": response}
+
 
 @app.post("/chat")
 def chat(data: dict = Body(...)):
@@ -107,31 +159,11 @@ def chat(data: dict = Body(...)):
         if not query:
             return {"error": "Query is empty"}
 
-        intent = classify_intent(query)
-        print(f"Intent: {intent}")
-
-        if intent == "sos":
-            return {
-                "intent": "sos",
-                "response": "EMERGENCY: Aapka SOS alert bheja ja raha hai. Aap safe rahein, madad aa rahi hai.",
-                "action": "TRIGGER_SOS"
-            }
-
-        if intent == "price":
-            crop = extract_crop_from_query(query)
-            live_price = get_mandi_price(crop)
-            response = ask_llm_with_intent(query, live_price, intent, language)
-            return {"intent": intent, "response": response, "live_data": live_price}
-
-        if intent == "weather":
-            location = extract_location_from_query(query)
-            live_weather = get_weather(location)
-            response = ask_llm_with_intent(query, live_weather, intent, language)
-            return {"intent": intent, "response": response, "live_data": live_weather}
-
-        context = get_rag_context(query)
-        response = ask_llm_with_intent(query, context, intent, language)
-        return {"intent": intent, "response": response}
+        return process_chat(
+            query,
+            language,
+            langsmith_extra={"metadata": {"language": language}},
+        )
 
     except Exception as e:
         print("CHAT ERROR:", str(e))
@@ -141,6 +173,66 @@ def chat(data: dict = Body(...)):
 # ══════════════════════════════════════════════════════════════════
 # VOICE ENDPOINT — audio file in, mp3 audio out
 # ══════════════════════════════════════════════════════════════════
+
+@traceable(
+    name="sakhi_voice",
+    run_type="chain",
+    project_name=_LANGSMITH_PROJECT,
+    tags=_TRACE_TAGS,
+)
+def process_voice(transcription: str, language: str) -> dict:
+    """Build voice response payload; caller converts to MP3 Response when needed."""
+    intent = classify_intent(transcription)
+    print(f"Intent: {intent}")
+
+    if intent == "sos":
+        sos_text = "Aapka SOS alert bheja ja raha hai. Aap safe rahein, madad aa rahi hai."
+        return {
+            "intent": intent,
+            "transcription": transcription,
+            "response": sos_text,
+            "action": "TRIGGER_SOS",
+        }
+
+    if intent == "price":
+        crop = extract_crop_from_query(transcription)
+        context = get_mandi_price(crop)
+        response_text = ask_llm_with_intent(transcription, context, intent, language)
+        return {
+            "intent": intent,
+            "transcription": transcription,
+            "response": response_text,
+        }
+
+    if intent == "weather":
+        location = extract_location_from_query(transcription)
+        context = get_weather(location)
+        response_text = ask_llm_with_intent(transcription, context, intent, language)
+        return {
+            "intent": intent,
+            "transcription": transcription,
+            "response": response_text,
+        }
+
+    context = get_rag_context(transcription)
+    response_text = ask_llm_with_intent(transcription, context, intent, language)
+    return {
+        "intent": intent,
+        "transcription": transcription,
+        "response": response_text,
+    }
+
+
+def _voice_audio_response(payload: dict, language: str):
+    """Turn process_voice payload into MP3 or JSON HTTP response."""
+    response_text = payload.get("response", "")
+    audio_bytes = text_to_speech(response_text, language_code=language)
+    if audio_bytes:
+        return Response(content=audio_bytes, media_type="audio/mpeg")
+    if payload.get("action") == "TRIGGER_SOS":
+        return payload
+    return payload
+
 
 @app.post("/voice")
 async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
@@ -159,46 +251,27 @@ async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
             content={"error": "Could not transcribe audio"},
         )
 
-    intent = classify_intent(transcription)
-    print(f"Intent: {intent}")
-
-    if intent == "sos":
-        sos_text = "Aapka SOS alert bheja ja raha hai. Aap safe rahein, madad aa rahi hai."
-        audio_bytes = text_to_speech(sos_text, language_code=language)
-        if audio_bytes:
-            return Response(content=audio_bytes, media_type="audio/mpeg")
-        return {"intent": "sos", "transcription": transcription, "response": sos_text, "action": "TRIGGER_SOS"}
-
-    if intent == "price":
-        crop = extract_crop_from_query(transcription)
-        context = get_mandi_price(crop)
-        response_text = ask_llm_with_intent(transcription, context, intent, language)
-        audio_bytes = text_to_speech(response_text, language_code=language)
-        if audio_bytes:
-            return Response(content=audio_bytes, media_type="audio/mpeg")
-        return {"intent": intent, "transcription": transcription, "response": response_text}
-
-    if intent == "weather":
-        location = extract_location_from_query(transcription)
-        context = get_weather(location)
-        response_text = ask_llm_with_intent(transcription, context, intent, language)
-        audio_bytes = text_to_speech(response_text, language_code=language)
-        if audio_bytes:
-            return Response(content=audio_bytes, media_type="audio/mpeg")
-        return {"intent": intent, "transcription": transcription, "response": response_text}
-
-    # disease / scheme / general — RAG
-    context = get_rag_context(transcription)
-    response_text = ask_llm_with_intent(transcription, context, intent, language)
-    audio_bytes = text_to_speech(response_text, language_code=language)
-    if audio_bytes:
-        return Response(content=audio_bytes, media_type="audio/mpeg")
-    return {"intent": intent, "transcription": transcription, "response": response_text}
+    payload = process_voice(
+        transcription,
+        language,
+        langsmith_extra={"metadata": {"language": language}},
+    )
+    return _voice_audio_response(payload, language)
 
 
 # ══════════════════════════════════════════════════════════════════
 # DIAGNOSE ENDPOINT — leaf image in, mp3 audio out
 # ══════════════════════════════════════════════════════════════════
+
+@traceable(
+    name="sakhi_diagnose",
+    run_type="chain",
+    project_name=_LANGSMITH_PROJECT,
+    tags=_TRACE_TAGS,
+)
+def process_diagnose(file_path: str, language: str) -> str:
+    return analyze_leaf_image(file_path, language=language)
+
 
 @app.post("/diagnose")
 async def diagnose_crop(file: UploadFile = File(...), language: str = "hi"):
@@ -208,7 +281,11 @@ async def diagnose_crop(file: UploadFile = File(...), language: str = "hi"):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    diagnosis = analyze_leaf_image(file_path, language=language)
+    diagnosis = process_diagnose(
+        file_path,
+        language,
+        langsmith_extra={"metadata": {"language": language}},
+    )
     audio_bytes = text_to_speech(diagnosis, language_code=language)
 
     if audio_bytes:
