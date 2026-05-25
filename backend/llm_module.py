@@ -1,19 +1,20 @@
 import os
-from langsmith import traceable
 
+import langsmith_setup  # noqa: F401 — configure tracing before LangSmith client use
 from dotenv import load_dotenv
+from langsmith import traceable
+from langsmith import wrappers
 from openai import OpenAI
 
 module_dir = os.path.dirname(os.path.abspath(__file__))
 dotenv_path = os.path.join(module_dir, ".env")
 load_dotenv(dotenv_path)
-print("Loading .env from:", dotenv_path)
-print("LANGSMITH_TRACING =", os.getenv("LANGSMITH_TRACING"))
-print("LANGSMITH_PROJECT =", os.getenv("LANGSMITH_PROJECT"))
-print("LANGSMITH_API_KEY exists =", bool(os.getenv("LANGSMITH_API_KEY")))
 
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
-TEXT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
+TEXT_MODEL = "meta/llama-3.1-8b-instruct"
+
+_trace_tags = ["sakhi-ai", "nvidia-nemotron"]
+_project = langsmith_setup.LANGSMITH_PROJECT
 
 _client: OpenAI | None = None
 
@@ -30,13 +31,26 @@ def _get_client() -> OpenAI:
             f"Please define it in your .env file at: {dotenv_path}"
         )
 
-    _client = OpenAI(
+    raw_client = OpenAI(
         base_url=NVIDIA_BASE_URL,
         api_key=api_key,
     )
+    _client = wrappers.wrap_openai(
+        raw_client,
+        tracing_extra={
+            "tags": _trace_tags,
+            "metadata": {"integration": "nvidia-openai", "model": TEXT_MODEL},
+        },
+    )
     return _client
 
-@traceable(name="generate_text")
+
+@traceable(
+    name="generate_text",
+    run_type="llm",
+    project_name=_project,
+    tags=_trace_tags,
+)
 def generate_text(prompt: str, temperature: float = 0.7) -> str:
     """Single-turn text generation via NVIDIA OpenAI-compatible API."""
     response = _get_client().chat.completions.create(
@@ -49,7 +63,13 @@ def generate_text(prompt: str, temperature: float = 0.7) -> str:
         return content.strip()
     return ""
 
-@traceable(name="ask_llm")
+
+@traceable(
+    name="ask_llm",
+    run_type="chain",
+    project_name=_project,
+    tags=_trace_tags,
+)
 def ask_llm(query: str, context: str = "") -> str:
     if context:
         prompt = f"""
@@ -102,7 +122,13 @@ Answer the farming question simply and practically.
 Keep it under 3 sentences. Speak like a trusted community advisor.""",
 }
 
-@traceable(name="ask_llm_with_intent")
+
+@traceable(
+    name="ask_llm_with_intent",
+    run_type="chain",
+    project_name=_project,
+    tags=_trace_tags,
+)
 def ask_llm_with_intent(
     query: str, context: str, intent: str, language: str = "hi"
 ) -> str:
@@ -130,7 +156,10 @@ FARMER'S QUESTION:
 """
 
     try:
-        text = generate_text(prompt)
+        text = generate_text(
+            prompt,
+            langsmith_extra={"metadata": {"intent": intent, "language": language}},
+        )
         if text:
             return text
         return "Mujhe maafi chahiye, main abhi jawab nahi de sakti. Dobara poochein."

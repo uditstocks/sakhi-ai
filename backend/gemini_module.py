@@ -1,8 +1,11 @@
 import base64
 import os
 
+import langsmith_setup  # noqa: F401
 from dotenv import load_dotenv
 from google import genai
+from langsmith import traceable
+from langsmith import wrappers
 
 # Vision-only module — text LLM calls live in llm_module.py (NVIDIA Nemotron).
 
@@ -17,10 +20,24 @@ if not api_key:
         f"Required for image analysis. Check your .env file at: {dotenv_path}"
     )
 
-vision_client = genai.Client(api_key=api_key)
+_gemini_client = genai.Client(api_key=api_key)
+vision_client = wrappers.wrap_gemini(
+    _gemini_client,
+    tracing_extra={
+        "tags": ["sakhi-ai", "gemini-vision"],
+        "metadata": {"integration": "google-genai", "module": "gemini_module"},
+    },
+)
 VISION_MODEL = "gemini-2.5-flash"
+_project = langsmith_setup.LANGSMITH_PROJECT
 
 
+@traceable(
+    name="analyze_leaf_image",
+    run_type="chain",
+    project_name=_project,
+    tags=["sakhi-ai", "gemini-vision"],
+)
 def analyze_leaf_image(image_path: str, language: str = "hi") -> str:
     try:
         lang_instruction = {

@@ -1,8 +1,20 @@
+import langsmith_setup  # noqa: F401
+from langsmith import traceable
+
 from llm_module import generate_text
 
 INTENTS = ["price", "disease", "scheme", "weather", "sos", "general"]
 
+_project = langsmith_setup.LANGSMITH_PROJECT
+_trace_tags = ["sakhi-ai", "intent-classifier"]
 
+
+@traceable(
+    name="classify_intent",
+    run_type="chain",
+    project_name=_project,
+    tags=_trace_tags,
+)
 def classify_intent(query: str) -> str:
     sos_keywords = [
         "help", "danger", "unsafe", "scared", "attack",
@@ -31,7 +43,11 @@ No explanation. No punctuation. Just the single word.
 """
 
     try:
-        intent = generate_text(prompt, temperature=0.1).strip().lower()
+        intent = generate_text(
+            prompt,
+            temperature=0.1,
+            langsmith_extra={"metadata": {"query_preview": query[:200]}},
+        ).strip().lower()
         if intent in INTENTS:
             print(f"Intent classified: {intent}")
             return intent
