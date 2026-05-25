@@ -13,6 +13,7 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
+# Vision-only smoke test — text LLM is in llm_module.py (NVIDIA Nemotron).
 response = client.models.generate_content(
     model="gemini-2.5-flash",
     contents="Hello"
