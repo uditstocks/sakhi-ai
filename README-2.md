@@ -1,4 +1,4 @@
-# 🌾 Sakhi AI
+#  Sakhi AI
 
 > **An AI-powered voice assistant for Indian farmers** — crop disease detection, mandi prices, weather, government schemes, and emergency SOS, all in Hindi and regional languages.
 
@@ -10,13 +10,11 @@ Sakhi AI is a multilingual agricultural assistant built for rural and semi-urban
 
 **Core capabilities:**
 
-- 📸 **Crop disease detection** — photograph a sick leaf, get a diagnosis in Hindi
-- 🎙️ **Voice chat** — speak in Hindi/Marathi/Punjabi, get spoken answers back
-- 💬 **Text chat** — ask about anything farming-related
-- 📊 **Live mandi prices** — real-time crop prices from local mandis
-- 🌦️ **Weather forecasts** — location-aware forecasts in plain language
-- 🏛️ **Government schemes** — PM-KISAN, PMFBY, Kisan Credit Card info
-- 🆘 **SOS alerts** — one-tap emergency alert with GPS location
+-  **Crop disease detection** — description of crop disease 
+-  **Voice chat** — speak in Hindi/Marathi/Punjabi, get spoken answers back
+-  **Live mandi prices** — real-time crop prices from local mandis
+-  **Government schemes** — PM-KISAN, PMFBY, Kisan Credit Card info
+-  **SOS alerts** — one-tap emergency alert with GPS location
 
 ---
 
@@ -34,11 +32,11 @@ Sakhi App (mobile / web)
        │
        ├── /chat      → Intent classify → RAG (ChromaDB) → LLM
        ├── /voice     → Whisper STT → Intent → LLM → TTS (mp3)
-       ├── /diagnose  → LLaMA 3.2 Vision (self-hosted) → TTS
+       
        ├── /mandi     → Mandi price API
        ├── /weather   → Weather API
        ├── /schemes   → Static scheme data
-       └── /sos       → GPS alert → WhatsApp Cloud API
+       └── /sos       → alert
 ```
 
 ---
