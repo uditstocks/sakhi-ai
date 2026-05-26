@@ -1,6 +1,6 @@
 #  Sakhi AI
 
-> **An AI-powered voice assistant for Indian farmers** — crop disease detection, mandi prices, weather, government schemes, and emergency SOS, all in Hindi and regional languages.
+> **An AI-powered voice assistant for Indian farmers** - crop disease detection, mandi prices, weather, government schemes, and emergency SOS, all in Hindi and regional languages.
 
 ---
 
@@ -10,11 +10,11 @@ Sakhi AI is a multilingual agricultural assistant built for rural and semi-urban
 
 **Core capabilities:**
 
--  **Crop disease detection** — description of crop disease 
--  **Voice chat** — speak in Hindi/Marathi/Punjabi, get spoken answers back
--  **Live mandi prices** — real-time crop prices from local mandis
--  **Government schemes** — PM-KISAN, PMFBY, Kisan Credit Card info
--  **SOS alerts** — one-tap emergency alert with GPS location
+-  **Crop disease detection** - description of crop disease 
+-  **Voice chat** - speak in Hindi/Marathi/Punjabi, get spoken answers back
+-  **Live mandi prices** - real-time crop prices from local mandis
+-  **Government schemes** - PM-KISAN, PMFBY, Kisan Credit Card info
+-  **SOS alerts** - one-tap emergency alert with GPS location
 
 ---
 
@@ -26,7 +26,7 @@ Sakhi App (mobile / web)
         │  HTTPS
         ▼
 ┌──────────────────────────────┐
-│   FastAPI Backend (main.py)  │
+│   LangChain\FastAPI Backend (main.py)  │
 │   + LangSmith tracing        │
 └──────┬───────────────────────┘
        │
@@ -34,7 +34,6 @@ Sakhi App (mobile / web)
        ├── /voice     → Whisper STT → Intent → LLM → TTS (mp3)
        
        ├── /mandi     → Mandi price API
-       ├── /weather   → Weather API
        ├── /schemes   → Static scheme data
        └── /sos       → alert
 ```
@@ -45,7 +44,7 @@ Sakhi App (mobile / web)
 
 | Layer | Technology |
 |---|---|
-| **API framework** | FastAPI + Uvicorn |
+| **API framework** | FastAPI + Uvicorn + LangChain |
 | **Disease detection** | LLaMA 3.2 Vision 11B (self-hosted via Ollama) |
 | **Speech-to-text** | OpenAI Whisper |
 | **Text-to-speech** | TTS module (Hindi/regional) |
