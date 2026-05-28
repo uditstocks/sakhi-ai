@@ -5,6 +5,7 @@
 ///
 /// Android emulator default: http://10.0.2.2:8000
 /// Physical device:          http://YOUR_LAPTOP_IP:8000  (same WiFi)
+library;
 import 'package:flutter/foundation.dart';
 import 'dart:io' show Platform;
 
