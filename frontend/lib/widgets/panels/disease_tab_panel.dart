@@ -3,7 +3,7 @@
 /// Allows the user to capture a leaf image with the device camera, sends it
 /// to the backend for AI-powered diagnosis, and plays the audio response.
 library;
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -40,6 +40,7 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
   final SakhiAudioPlayer _player = SakhiAudioPlayer();
 
   XFile? _image;
+  Uint8List? _imageBytes;
   bool _uploading = false;
 
   /// Releases the audio player resources when the widget is disposed.
@@ -62,9 +63,15 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
 
     if (file == null || !mounted) return;
 
-    setState(() => _image = file);
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
 
-    await _analyzeImage(file);
+    setState(() {
+      _image = file;
+      _imageBytes = bytes;
+    });
+
+    await _analyzeImage(bytes);
   }
 
   /// Sends the captured leaf image to the backend for AI disease diagnosis.
@@ -72,13 +79,13 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
   /// Displays a loading indicator during upload. On success, plays the
   /// returned audio bytes through [SakhiAudioPlayer]. On failure, shows a
   /// snackbar with an error message.
-  Future<void> _analyzeImage(XFile file) async {
+  Future<void> _analyzeImage(Uint8List imageBytes) async {
     setState(() => _uploading = true);
 
     try {
       // Send image to backend
-      final audioBytes = await widget.api.diagnoseCropImage(
-        imageFile: File(file.path),
+      final audioBytes = await widget.api.diagnoseCropImageBytes(
+        imageBytes: imageBytes,
         languageCode: 'hi',
       );
 
@@ -200,12 +207,12 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
               ),
               textAlign: TextAlign.center,
             ),
-            if (_image != null) ...[
+            if (_image != null && _imageBytes != null) ...[
               const SizedBox(height: 20),
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.file(
-                  File(_image!.path),
+                child: Image.memory(
+                  _imageBytes!,
                   height: 140,
                   width: double.infinity,
                   fit: BoxFit.cover,
