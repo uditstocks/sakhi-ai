@@ -3,6 +3,7 @@
 /// Shows the [PulsingMicButton] along with contextual text and a
 /// [WaveformAnimation] that swap depending on whether the assistant is
 /// currently listening or idle.
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';

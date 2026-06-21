@@ -3,6 +3,7 @@
 /// Contains the voice recording interface, tab navigation (Home, Mandi,
 /// Disease, Schemes, SOS), language picker, and orchestrates all API calls
 /// for voice chat, mandi prices, disease diagnosis, and government schemes.
+library;
 
 import 'dart:io';
 

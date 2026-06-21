@@ -3,6 +3,7 @@
 /// Presents a centered dialog containing a 2-column grid of language tiles
 /// (Hindi, English, Marathi, Telugu, Tamil, Bengali, Kannada). Tapping a tile
 /// pops the overlay and returns the selected [AppLanguage].
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_language.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';

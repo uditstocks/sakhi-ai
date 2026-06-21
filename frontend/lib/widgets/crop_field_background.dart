@@ -3,6 +3,7 @@
 /// Layers a deep-green gradient, a warm sunrise glow, soft hill silhouettes,
 /// gentle light rays, scattered seed dots, and a wavy crop-row texture to
 /// evoke a sunrise over a cultivated field.
+library;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';

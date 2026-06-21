@@ -2,6 +2,7 @@
 ///
 /// Displays a sync icon, a localized "Offline Mode" title, a short status
 /// message, an "OK" connectivity badge, and the last-synced timestamp.
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_language.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';

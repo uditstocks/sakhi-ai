@@ -3,6 +3,7 @@
 /// Provides centralized text styles using Poppins and Hind fonts (via
 /// Google Fonts) and builds the app-wide [ThemeData] with a dark theme
 /// featuring gold and green palette colors.
+library;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';

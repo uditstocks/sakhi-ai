@@ -2,6 +2,7 @@
 ///
 /// Allows the user to capture a leaf image with the device camera, sends it
 /// to the backend for AI-powered diagnosis, and plays the audio response.
+library;
 import 'dart:io';
 
 import 'package:flutter/material.dart';

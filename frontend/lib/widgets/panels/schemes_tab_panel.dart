@@ -2,6 +2,7 @@
 ///
 /// Fetches agricultural schemes from the backend API, displays them in a
 /// scrollable list, and falls back to bundled demo data when offline.
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/data/demo_schemes.dart';
 import 'package:sakhi_ai/l10n/app_language.dart';

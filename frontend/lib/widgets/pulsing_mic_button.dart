@@ -3,6 +3,7 @@
 /// When [isListening] is false, the button is gold with three expanding ripple
 /// rings. When listening, it turns red and the ripples stop, giving clear
 /// visual feedback that voice capture is active.
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 

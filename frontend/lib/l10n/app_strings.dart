@@ -4,6 +4,7 @@
 /// English, Marathi, Telugu, Tamil, Bengali, Kannada). Each getter uses a
 /// switch expression on the current [AppLanguage] to return the correct
 /// translation.
+library;
 import 'package:sakhi_ai/l10n/app_language.dart';
 
 /// Holds all user-facing strings for the app, resolved by [language].

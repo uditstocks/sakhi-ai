@@ -3,6 +3,7 @@
 /// Defines three critical emergency services — ambulance, police, and women
 /// helpline — with their phone numbers, icons, and theme colors. Used by
 /// the SOS panel to render tap-to-call contact cards.
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/models/helpline_contact.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
