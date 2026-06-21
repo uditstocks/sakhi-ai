@@ -1,3 +1,7 @@
+/// Crop disease detection tab panel.
+///
+/// Allows the user to capture a leaf image with the device camera, sends it
+/// to the backend for AI-powered diagnosis, and plays the audio response.
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +12,11 @@ import 'package:sakhi_ai/services/audio_player_service.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 
+/// Stateful widget for the crop disease detection panel.
+///
+/// Provides a camera button to capture a leaf photo, uploads it to the backend
+/// for AI diagnosis, and plays back the spoken response through the audio
+/// player service.
 class DiseaseTabPanel extends StatefulWidget {
   const DiseaseTabPanel({
     super.key,
@@ -22,6 +31,9 @@ class DiseaseTabPanel extends StatefulWidget {
   State<DiseaseTabPanel> createState() => _DiseaseTabPanelState();
 }
 
+/// State for [DiseaseTabPanel].
+///
+/// Manages the captured image, upload progress, and audio playback lifecycle.
 class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
   final _picker = ImagePicker();
   final SakhiAudioPlayer _player = SakhiAudioPlayer();
@@ -29,12 +41,17 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
   XFile? _image;
   bool _uploading = false;
 
+  /// Releases the audio player resources when the widget is disposed.
   @override
   void dispose() {
     _player.dispose();
     super.dispose();
   }
 
+  /// Opens the device camera and lets the user capture a leaf photo.
+  ///
+  /// The captured image is stored in [_image] and immediately sent for
+  /// AI diagnosis via [_analyzeImage].
   Future<void> _pickFromCamera() async {
     final file = await _picker.pickImage(
       source: ImageSource.camera,
@@ -49,6 +66,11 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
     await _analyzeImage(file);
   }
 
+  /// Sends the captured leaf image to the backend for AI disease diagnosis.
+  ///
+  /// Displays a loading indicator during upload. On success, plays the
+  /// returned audio bytes through [SakhiAudioPlayer]. On failure, shows a
+  /// snackbar with an error message.
   Future<void> _analyzeImage(XFile file) async {
     setState(() => _uploading = true);
 
@@ -89,6 +111,8 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
     }
   }
 
+  /// Builds the disease panel UI: a card with a leaf emoji, camera button,
+  /// title, hint text, captured image preview, and a "Take Photo" button.
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(

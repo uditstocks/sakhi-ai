@@ -1,3 +1,7 @@
+/// Government schemes tab panel.
+///
+/// Fetches agricultural schemes from the backend API, displays them in a
+/// scrollable list, and falls back to bundled demo data when offline.
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/data/demo_schemes.dart';
 import 'package:sakhi_ai/l10n/app_language.dart';
@@ -7,6 +11,11 @@ import 'package:sakhi_ai/services/sakhi_api_service.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 
+/// Stateful widget that displays government agricultural schemes.
+///
+/// Provides a "Connect to Database" button to fetch live scheme data from the
+/// backend. Shows a loading spinner during fetch and gracefully falls back to
+/// [kDemoSchemes] when the backend is unreachable.
 class SchemesTabPanel extends StatefulWidget {
   const SchemesTabPanel({
     super.key,
@@ -23,6 +32,10 @@ class SchemesTabPanel extends StatefulWidget {
   State<SchemesTabPanel> createState() => _SchemesTabPanelState();
 }
 
+/// State for [SchemesTabPanel].
+///
+/// Manages the list of schemes, loading flag, connection status, and
+/// offline-fallback flag. Triggers a backend fetch on init.
 class _SchemesTabPanelState extends State<SchemesTabPanel> {
   List<GovtScheme> _schemes = [];
   bool _loading = false;
@@ -35,6 +48,11 @@ class _SchemesTabPanelState extends State<SchemesTabPanel> {
     _loadFromDatabase();
   }
 
+  /// Fetches government schemes from the backend API.
+  ///
+  /// On success, parses the JSON response into [GovtScheme] objects and shows
+  /// a snackbar confirming the connection. On failure, falls back to
+  /// [kDemoSchemes] and marks the panel as offline.
   Future<void> _loadFromDatabase() async {
     setState(() => _loading = true);
 
@@ -72,6 +90,8 @@ class _SchemesTabPanelState extends State<SchemesTabPanel> {
     }
   }
 
+  /// Builds the schemes panel UI: a header card with the connect button,
+  /// a connection-status indicator, and a list of scheme cards below.
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -194,6 +214,10 @@ class _SchemesTabPanelState extends State<SchemesTabPanel> {
   }
 }
 
+/// Card widget that displays a single government scheme's details.
+///
+/// Shows the scheme name, state (if available), summary, and eligibility
+/// criteria in a styled container with a gold-accent border.
 class _SchemeCard extends StatelessWidget {
   const _SchemeCard({required this.scheme});
 

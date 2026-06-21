@@ -1,9 +1,18 @@
+/// Mandi (market) prices tab panel.
+///
+/// Displays a card prompting the user to ask about crop prices via voice.
+/// Includes a shimmer animation overlay for visual emphasis.
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 import 'package:shimmer/shimmer.dart';
 
+/// Stateless widget that renders the Mandi price inquiry panel.
+///
+/// Shows a styled card with a voice-prompt button. The card is wrapped in a
+/// [Shimmer] effect to draw the user's attention. Accepts an optional
+/// [onVoiceTap] callback to trigger voice input.
 class MandiTabPanel extends StatelessWidget {
   const MandiTabPanel({
     super.key,
@@ -14,6 +23,8 @@ class MandiTabPanel extends StatelessWidget {
   final AppStrings strings;
   final VoidCallback? onVoiceTap;
 
+  /// Builds the mandi panel: a shimmer-wrapped card with a crop emoji,
+  /// title, hint text, and a "Tap to Speak" voice button.
   @override
   Widget build(BuildContext context) {
     Widget panel = Container(

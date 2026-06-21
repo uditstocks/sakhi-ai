@@ -1,6 +1,17 @@
+/// Localized strings for the Sakhi AI app.
+///
+/// Provides translated UI strings for all 7 supported languages (Hindi,
+/// English, Marathi, Telugu, Tamil, Bengali, Kannada). Each getter uses a
+/// switch expression on the current [AppLanguage] to return the correct
+/// translation.
 import 'package:sakhi_ai/l10n/app_language.dart';
 
+/// Holds all user-facing strings for the app, resolved by [language].
+///
+/// Instantiate with an [AppLanguage] and access localized strings via
+/// getters (e.g., `strings.tagline`, `strings.tapToSpeakPrimary`).
 class AppStrings {
+  /// Creates an [AppStrings] instance for the given [language].
   AppStrings(this.language);
 
   final AppLanguage language;

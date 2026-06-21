@@ -1,3 +1,8 @@
+/// Enum defining the languages supported by Sakhi AI.
+///
+/// Each language carries its English name, native-script name, and ISO 639-1
+/// language code. Used throughout the app for localization and language
+/// selection UI.
 enum AppLanguage {
   hindi('Hindi', 'हिंदी', 'hi'),
   english('English', 'English', 'en'),

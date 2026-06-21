@@ -1,7 +1,27 @@
+"""
+market_module.py — Mandi (market) price module for Sakhi AI.
+
+Fetches live crop prices from the Indian government's data.gov.in API.
+Supports Hindi/English crop name mapping and formats prices for farmer responses.
+"""
+
 import requests
 
+
 def get_mandi_price(crop: str, state: str = "Uttar Pradesh") -> str:
+    """
+    Fetches current mandi (market) prices for a given crop from the government API.
+
+    Args:
+        crop: Crop name in English or Hindi (e.g., 'wheat', 'gehoon', 'rice').
+        state: Indian state name. Defaults to 'Uttar Pradesh'.
+
+    Returns:
+        Formatted string with market prices (min, max, modal) per quintal,
+        or a message if data is unavailable.
+    """
     try:
+        # Maps Hindi/English crop names to API-compatible names
         crop_map = {
             "wheat": "Wheat", "gehoon": "Wheat", "gehun": "Wheat",
             "rice": "Paddy(Dhan)(Common)", "chawal": "Paddy(Dhan)(Common)", "dhan": "Paddy(Dhan)(Common)",
@@ -12,10 +32,11 @@ def get_mandi_price(crop: str, state: str = "Uttar Pradesh") -> str:
             "tomato": "Tomato", "tamatar": "Tomato",
         }
 
-        # Normalize crop name
+        # Normalize crop name to API format
         crop_key = crop.lower().strip()
         api_crop = crop_map.get(crop_key, crop.capitalize())
 
+        # Fetch prices from data.gov.in API
         url = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
         params = {
             "api-key": "579b464db66ec23bdd000001cdd3946e44ce4aab56ef91a068b4827",
@@ -32,6 +53,7 @@ def get_mandi_price(crop: str, state: str = "Uttar Pradesh") -> str:
         if not records:
             return f"Aaj {crop} ka mandi price data available nahi hai. Kripya apni najdeeki mandi se confirm karein."
 
+        # Format price data for each market
         result_lines = [f"{crop.capitalize()} ke aaj ke mandi prices ({state}):"]
         for r in records:
             market = r.get("market", "Unknown")

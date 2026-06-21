@@ -1,3 +1,8 @@
+/// Hero section of the home screen centred around the microphone button.
+///
+/// Shows the [PulsingMicButton] along with contextual text and a
+/// [WaveformAnimation] that swap depending on whether the assistant is
+/// currently listening or idle.
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
@@ -5,6 +10,8 @@ import 'package:sakhi_ai/theme/sakhi_theme.dart';
 import 'package:sakhi_ai/widgets/pulsing_mic_button.dart';
 import 'package:sakhi_ai/widgets/waveform_animation.dart';
 
+/// A stateless widget that composes the mic button, status text, and
+/// waveform animation into a single centred column.
 class HeroMicSection extends StatelessWidget {
   const HeroMicSection({
     super.key,
@@ -13,10 +20,17 @@ class HeroMicSection extends StatelessWidget {
     required this.onMicTap,
   });
 
+  /// Localized strings for listening, idle, and subtitle text.
   final AppStrings strings;
+
+  /// Whether the assistant is actively listening for voice input.
   final bool isListening;
+
+  /// Callback invoked when the user taps the microphone button.
   final VoidCallback onMicTap;
 
+  /// Builds either the listening layout (waveform + red mic) or the idle
+  /// layout (tap-to-speak text + gold mic) based on [isListening].
   @override
   Widget build(BuildContext context) {
     return Padding(
