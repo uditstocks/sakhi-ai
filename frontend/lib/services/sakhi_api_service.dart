@@ -291,6 +291,50 @@ class SakhiApiService {
     }
   }
 
+  /// Uploads a crop image for disease diagnosis using raw bytes.
+  ///
+  /// [imageBytes] is the raw image data (works on web and mobile).
+  /// [languageCode] specifies the language for the response (default: 'hi').
+  /// Returns the raw response bytes (typically an image) on success (HTTP 200),
+  /// or `null` on failure.
+  Future<List<int>?> diagnoseCropImageBytes({
+    required Uint8List imageBytes,
+    String languageCode = 'hi',
+  }) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(
+          '$_baseUrl${ApiConfig.cropDisease}?language=$languageCode',
+        ),
+      );
+
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          imageBytes,
+          filename: 'crop_image.jpg',
+        ),
+      );
+
+      final streamed =
+          await request.send().timeout(ApiConfig.receiveTimeout);
+
+      if (streamed.statusCode == 200) {
+        return await streamed.stream.toBytes();
+      }
+
+      final body = await streamed.stream.bytesToString();
+
+      print('Diagnose API error ${streamed.statusCode}: $body');
+
+      return null;
+    } catch (e) {
+      print('diagnoseCropImageBytes error: $e');
+      return null;
+    }
+  }
+
   // ─────────────────────────────────────────────
   // GOVT SCHEMES
   // ─────────────────────────────────────────────

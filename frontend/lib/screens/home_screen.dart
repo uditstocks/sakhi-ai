@@ -153,19 +153,19 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final VoiceApiResult result;
 
-      // Web uses bytes, native uses file path
+      // Read audio as bytes for cross-platform compatibility
+      final Uint8List recordedBytes;
       if (kIsWeb) {
         final response = await http.get(Uri.parse(path));
-        result = await _api.sendVoiceBytes(
-          audioBytes: response.bodyBytes,
-          languageCode: _language.code,
-        );
+        recordedBytes = response.bodyBytes;
       } else {
-        result = await _api.sendVoiceFile(
-          audioFile: File(path),
-          languageCode: _language.code,
-        );
+        recordedBytes = await File(path).readAsBytes();
       }
+
+      result = await _api.sendVoiceBytes(
+        audioBytes: recordedBytes,
+        languageCode: _language.code,
+      );
 
       // Play audio response or show error
       final audioBytes = result.audioBytes;
