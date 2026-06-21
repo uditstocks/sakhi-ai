@@ -3,6 +3,7 @@
 /// Shown when the backend API or database is unreachable (offline mode).
 /// Contains three well-known Indian agricultural schemes: PM-KISAN,
 /// PM Fasal Bima Yojana, and Kisan Credit Card.
+library;
 import 'package:sakhi_ai/models/govt_scheme.dart';
 
 /// Bundled list of demo [GovtScheme] entries used as an offline fallback.

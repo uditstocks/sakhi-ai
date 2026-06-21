@@ -2,6 +2,7 @@
 ///
 /// Holds the contact's unique ID, display emoji, localization key, phone
 /// numbers, Material icon, and theme color for rendering in the SOS panel.
+library;
 import 'package:flutter/material.dart';
 
 /// Immutable representation of a single emergency helpline entry.

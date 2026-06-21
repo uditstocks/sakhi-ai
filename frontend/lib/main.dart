@@ -2,6 +2,7 @@
 ///
 /// Initializes Flutter bindings, configures system UI overlay,
 /// and launches the SakhiApp MaterialApp with custom theme and home screen.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

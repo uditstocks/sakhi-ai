@@ -1,6 +1,7 @@
 /// Animated waveform bars displayed while the assistant is actively listening
 /// to voice input. The bars oscillate continuously using a sine-based phase
 /// offset to simulate audio activity.
+library;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';

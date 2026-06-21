@@ -2,6 +2,7 @@
 ///
 /// Displays emergency helpline numbers (ambulance, police, women) with
 /// tap-to-call functionality using [url_launcher].
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/data/india_helplines.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';

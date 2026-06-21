@@ -2,6 +2,7 @@
 ///
 /// Provides five tabs — Home, Mandi, Disease, Schemes, and SOS — each
 /// represented by an emoji (or icon for SOS) and a localized label.
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';

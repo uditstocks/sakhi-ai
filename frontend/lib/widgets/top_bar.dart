@@ -2,6 +2,7 @@
 ///
 /// Displays the "Sakhi AI" title, a localized tagline, and a button that
 /// opens the language picker showing the current language label.
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_language.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';

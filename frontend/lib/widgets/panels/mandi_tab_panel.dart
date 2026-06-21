@@ -2,6 +2,7 @@
 ///
 /// Displays a card prompting the user to ask about crop prices via voice.
 /// Includes a shimmer animation overlay for visual emphasis.
+library;
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
