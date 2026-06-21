@@ -1,9 +1,17 @@
+/// Top app bar widget for the Sakhi AI home screen.
+///
+/// Displays the "Sakhi AI" title, a localized tagline, and a button that
+/// opens the language picker showing the current language label.
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_language.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 
+/// A stateless top bar that renders the app branding and a language switcher.
+///
+/// Requires [strings] for localized text, [language] for the current locale,
+/// and [onLanguageTap] to handle language-button presses.
 class SakhiTopBar extends StatelessWidget {
   const SakhiTopBar({
     super.key,
@@ -12,10 +20,16 @@ class SakhiTopBar extends StatelessWidget {
     required this.onLanguageTap,
   });
 
+  /// Localized UI strings used for the tagline.
   final AppStrings strings;
+
+  /// The currently selected app language.
   final AppLanguage language;
+
+  /// Callback invoked when the language pill button is tapped.
   final VoidCallback onLanguageTap;
 
+  /// Builds the top bar layout with title on the left and language button on the right.
   @override
   Widget build(BuildContext context) {
     return Padding(

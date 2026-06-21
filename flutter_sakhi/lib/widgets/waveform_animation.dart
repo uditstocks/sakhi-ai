@@ -1,9 +1,15 @@
+/// Animated waveform bars displayed while the assistant is actively listening
+/// to voice input. The bars oscillate continuously using a sine-based phase
+/// offset to simulate audio activity.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 
-/// Animated bars shown while the assistant is listening.
+/// A stateful widget that renders seven animated vertical bars.
+///
+/// Each bar's height oscillates independently via a phase-shifted sine wave,
+/// creating a smooth waveform visualisation.
 class WaveformAnimation extends StatefulWidget {
   const WaveformAnimation({super.key});
 
@@ -15,6 +21,7 @@ class _WaveformAnimationState extends State<WaveformAnimation>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
+  /// Sets up the repeating animation controller (900 ms cycle).
   @override
   void initState() {
     super.initState();
@@ -24,12 +31,14 @@ class _WaveformAnimationState extends State<WaveformAnimation>
     )..repeat();
   }
 
+  /// Disposes the animation controller to free resources.
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
+  /// Builds seven animated bars whose heights oscillate via a sine wave.
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(

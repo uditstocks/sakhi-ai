@@ -1,9 +1,17 @@
+/// Full-screen language selection overlay for Sakhi AI.
+///
+/// Presents a centered dialog containing a 2-column grid of language tiles
+/// (Hindi, English, Marathi, Telugu, Tamil, Bengali, Kannada). Tapping a tile
+/// pops the overlay and returns the selected [AppLanguage].
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_language.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 
-/// Opens a centered overlay listing all app languages in square tiles.
+/// Opens a modal overlay that lets the user pick an app language.
+///
+/// Returns the selected [AppLanguage], or `null` if the user dismisses the
+/// overlay without choosing.
 Future<AppLanguage?> showLanguagePicker(
   BuildContext context, {
   required AppLanguage current,
@@ -30,11 +38,17 @@ Future<AppLanguage?> showLanguagePicker(
   );
 }
 
+/// The inner content of the language picker dialog.
+///
+/// Renders a titled card with a 2-column grid of [_LanguageTile] widgets,
+/// one for each supported [AppLanguage].
 class _LanguagePickerSheet extends StatelessWidget {
   const _LanguagePickerSheet({required this.current});
 
+  /// The currently active language, used to highlight the selected tile.
   final AppLanguage current;
 
+  /// Builds the dialog card with title, subtitle, and language grid.
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -101,6 +115,10 @@ class _LanguagePickerSheet extends StatelessWidget {
   }
 }
 
+/// A single square tile representing one language in the picker grid.
+///
+/// Shows the language's English name, native name, and a check-mark icon
+/// when it is the currently selected language.
 class _LanguageTile extends StatelessWidget {
   const _LanguageTile({
     required this.language,
@@ -108,10 +126,16 @@ class _LanguageTile extends StatelessWidget {
     required this.onTap,
   });
 
+  /// The language this tile represents.
   final AppLanguage language;
+
+  /// Whether this tile is the currently selected language.
   final bool selected;
+
+  /// Callback invoked when the user taps this tile.
   final VoidCallback onTap;
 
+  /// Renders the tile with a highlighted border and check-mark when selected.
   @override
   Widget build(BuildContext context) {
     return Semantics(

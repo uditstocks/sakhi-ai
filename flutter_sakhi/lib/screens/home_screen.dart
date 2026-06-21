@@ -1,3 +1,9 @@
+/// home_screen.dart — Main screen of the Sakhi AI Flutter app.
+///
+/// Contains the voice recording interface, tab navigation (Home, Mandi,
+/// Disease, Schemes, SOS), language picker, and orchestrates all API calls
+/// for voice chat, mandi prices, disease diagnosis, and government schemes.
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -20,6 +26,7 @@ import 'package:sakhi_ai/widgets/sakhi_bottom_nav.dart';
 import 'package:sakhi_ai/widgets/sync_status_bar.dart';
 import 'package:sakhi_ai/widgets/top_bar.dart';
 
+/// Main screen widget — stateful to manage recording, navigation, and API state.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.apiService});
   final SakhiApiService? apiService;
@@ -43,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final AudioRecorder _recorder = AudioRecorder();
   final SakhiAudioPlayer _player = SakhiAudioPlayer();
 
+  // Localized strings based on current language
   AppStrings get _strings => AppStrings(_language);
 
   // ── Lifecycle ──────────────────────────────────────────────────
@@ -64,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Sync label ─────────────────────────────────────────────────
 
+  /// Fetches sync status from backend and updates the last-synced label.
   Future<void> _refreshSyncLabel() async {
     try {
       final status = await _api.fetchSyncStatus();
@@ -76,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Language picker ────────────────────────────────────────────
 
+  /// Opens the language selection overlay and updates the app language.
   Future<void> _openLanguagePicker() async {
     final selected = await showLanguagePicker(context, current: _language);
     if (selected != null && selected != _language && mounted) {
@@ -85,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Mic tap ────────────────────────────────────────────────────
 
+  /// Toggles between starting and stopping voice recording.
   Future<void> _onMicTap() async {
     if (_isLoading) return;
     if (_isListening) {
@@ -94,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Starts audio recording with AAC-LC encoder.
   Future<void> _startRecording() async {
     final hasPermission = await _recorder.hasPermission();
     if (!hasPermission) {
@@ -120,6 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Stops recording, sends audio to backend, and plays the MP3 response.
   Future<void> _stopRecordingAndSend() async {
     final path = await _recorder.stop();
     if (mounted) {
@@ -139,6 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final VoiceApiResult result;
 
+      // Web uses bytes, native uses file path
       if (kIsWeb) {
         final response = await http.get(Uri.parse(path));
         result = await _api.sendVoiceBytes(
@@ -152,6 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
 
+      // Play audio response or show error
       final audioBytes = result.audioBytes;
       if (audioBytes != null && audioBytes.isNotEmpty) {
         await _player.playBytes(audioBytes);
@@ -171,10 +186,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Updates the status message displayed below the mic button.
   void _setStatus(String msg) {
     if (mounted) setState(() => _statusMessage = msg);
   }
 
+  /// Switches to home tab and triggers mic tap for voice input.
   void _goHomeAndSpeak() {
     setState(() {
       _navTab = SakhiNavTab.home;
@@ -185,6 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Main content switcher ──────────────────────────────────────
 
+  /// Builds the content for the currently selected navigation tab.
   Widget _buildMainContent() {
     return switch (_navTab) {
       SakhiNavTab.home => LayoutBuilder(

@@ -1,14 +1,26 @@
+/// Full-screen painted background for the Sakhi AI home screen.
+///
+/// Layers a deep-green gradient, a warm sunrise glow, soft hill silhouettes,
+/// gentle light rays, scattered seed dots, and a wavy crop-row texture to
+/// evoke a sunrise over a cultivated field.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 
-/// Deep green base with warm sunlight, soft hills, and crop-row texture.
+/// A stateless wrapper that paints the field background behind [child].
+///
+/// The background is composed of three layers:
+/// 1. A static [LinearGradient] base.
+/// 2. A [_FieldAtmospherePainter] for glow, hills, rays, and dots.
+/// 3. A [_CropRowPainter] for the wavy crop-row lines.
 class CropFieldBackground extends StatelessWidget {
   const CropFieldBackground({super.key, required this.child});
 
+  /// The foreground content rendered on top of the painted background.
   final Widget child;
 
+  /// Stacks the gradient base, atmosphere painter, crop-row painter, and [child].
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -37,7 +49,11 @@ class CropFieldBackground extends StatelessWidget {
   }
 }
 
+/// Custom painter that draws the atmospheric elements of the field background:
+/// a warm sunrise glow, soft hill silhouettes, gentle light rays, and
+/// scattered seed-dot texture.
 class _FieldAtmospherePainter extends CustomPainter {
+  /// Paints all atmospheric layers onto the canvas.
   @override
   void paint(Canvas canvas, Size size) {
     // Warm sunrise glow behind the mic area
@@ -109,11 +125,15 @@ class _FieldAtmospherePainter extends CustomPainter {
     }
   }
 
+  /// Returns false because the background is static and never needs repainting.
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+/// Custom painter that draws wavy horizontal crop-row lines across the lower
+/// portion of the canvas to simulate ploughed field texture.
 class _CropRowPainter extends CustomPainter {
+  /// Paints evenly-spaced wavy lines from 38 % to 100 % of the canvas height.
   @override
   void paint(Canvas canvas, Size size) {
     final rowPaint = Paint()
@@ -135,6 +155,7 @@ class _CropRowPainter extends CustomPainter {
     }
   }
 
+  /// Returns false because the crop rows are static and never need repainting.
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

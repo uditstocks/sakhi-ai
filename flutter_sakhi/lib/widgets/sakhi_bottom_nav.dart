@@ -1,10 +1,17 @@
+/// Bottom navigation bar for the Sakhi AI app.
+///
+/// Provides five tabs — Home, Mandi, Disease, Schemes, and SOS — each
+/// represented by an emoji (or icon for SOS) and a localized label.
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 
+/// Enumerates the five top-level navigation destinations in the app.
 enum SakhiNavTab { home, mandi, disease, schemes, sos }
 
+/// A stateless bottom navigation bar that highlights the [activeTab] and
+/// invokes [onTabSelected] when the user taps a tab.
 class SakhiBottomNav extends StatelessWidget {
   const SakhiBottomNav({
     super.key,
@@ -13,10 +20,16 @@ class SakhiBottomNav extends StatelessWidget {
     required this.onTabSelected,
   });
 
+  /// Localized labels for each tab.
   final AppStrings strings;
+
+  /// The currently selected navigation tab.
   final SakhiNavTab activeTab;
+
+  /// Callback fired when the user taps a tab; receives the selected tab.
   final ValueChanged<SakhiNavTab> onTabSelected;
 
+  /// Builds the horizontal row of five [_NavItem] widgets inside a styled container.
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -77,6 +90,10 @@ class SakhiBottomNav extends StatelessWidget {
   }
 }
 
+/// A single navigation item inside [SakhiBottomNav].
+///
+/// Renders an emoji (or an emergency icon for SOS), a label, and adjusts
+/// its colour to indicate whether it is the active tab.
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.label,
@@ -86,12 +103,23 @@ class _NavItem extends StatelessWidget {
     this.isSos = false,
   });
 
+  /// Optional emoji displayed above the label (null for SOS).
   final String? emoji;
+
+  /// Localized label text shown below the icon.
   final String label;
+
+  /// Whether this tab is currently selected.
   final bool isActive;
+
+  /// Whether this item is the SOS emergency tab (uses a red icon instead of emoji).
   final bool isSos;
+
+  /// Callback invoked when the user taps this navigation item.
   final VoidCallback onTap;
 
+  /// Builds the visual representation of this nav item, choosing between
+  /// an emoji or SOS emergency icon and applying active/inactive colours.
   @override
   Widget build(BuildContext context) {
     final labelColor = isSos

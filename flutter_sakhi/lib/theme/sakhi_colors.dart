@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Sakhi AI brand palette — warm, earthy, high contrast for rural accessibility.
+/// Centralized color constants for the Sakhi AI brand.
+///
+/// Defines warm, earthy tones (greens, golds, creams) optimized for high
+/// contrast and rural accessibility. Also includes SOS reds and offline grays.
 abstract final class SakhiColors {
   static const Color deepGreen = Color(0xFF2D5016);
   static const Color deepGreenDark = Color(0xFF1E3810);

@@ -1,7 +1,13 @@
+/// Large circular microphone button with a ripple-pulse animation.
+///
+/// When [isListening] is false, the button is gold with three expanding ripple
+/// rings. When listening, it turns red and the ripples stop, giving clear
+/// visual feedback that voice capture is active.
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 
-/// Large mic button with ripple pulse; turns red when [isListening].
+/// A stateful mic button that pulses with expanding ripple rings when idle
+/// and switches to a solid red appearance while listening.
 class PulsingMicButton extends StatefulWidget {
   const PulsingMicButton({
     super.key,
@@ -9,13 +15,19 @@ class PulsingMicButton extends StatefulWidget {
     required this.onPressed,
   });
 
+  /// Whether the assistant is currently listening for voice input.
   final bool isListening;
+
+  /// Callback invoked when the user taps the mic button.
   final VoidCallback onPressed;
 
+  /// Creates the state for [PulsingMicButton].
   @override
   State<PulsingMicButton> createState() => _PulsingMicButtonState();
 }
 
+/// Manages two animation controllers — one for the button glow pulse and one
+/// for the expanding ripple rings — and composes the final stacked widget.
 class _PulsingMicButtonState extends State<PulsingMicButton>
     with TickerProviderStateMixin {
   static const double _buttonSize = 120;
@@ -23,6 +35,7 @@ class _PulsingMicButtonState extends State<PulsingMicButton>
   late final AnimationController _pulseController;
   late final AnimationController _rippleController;
 
+  /// Initialises both the glow-pulse and ripple animation controllers.
   @override
   void initState() {
     super.initState();
@@ -37,6 +50,7 @@ class _PulsingMicButtonState extends State<PulsingMicButton>
     )..repeat();
   }
 
+  /// Disposes both animation controllers to free resources.
   @override
   void dispose() {
     _pulseController.dispose();
@@ -44,6 +58,8 @@ class _PulsingMicButtonState extends State<PulsingMicButton>
     super.dispose();
   }
 
+  /// Builds the stacked mic button with ripple rings (idle) and a glowing
+  /// circular button that changes colour based on listening state.
   @override
   Widget build(BuildContext context) {
     final buttonColor =
@@ -116,6 +132,8 @@ class _PulsingMicButtonState extends State<PulsingMicButton>
     );
   }
 
+  /// Builds a single expanding ripple ring with the given [phaseOffset],
+  /// [color], and [maxOpacity].
   Widget _buildRipple(double phaseOffset, Color color, double maxOpacity) {
     return AnimatedBuilder(
       animation: _rippleController,
@@ -132,6 +150,10 @@ class _PulsingMicButtonState extends State<PulsingMicButton>
   }
 }
 
+/// A single circular ripple ring that scales and fades over time.
+///
+/// Used by [_PulsingMicButtonState] to create the expanding ripple effect
+/// around the mic button when it is idle.
 class _RippleRing extends StatelessWidget {
   const _RippleRing({
     required this.scale,
@@ -140,13 +162,22 @@ class _RippleRing extends StatelessWidget {
     this.strokeWidth = 3,
   });
 
+  /// Current scale factor applied via [Transform.scale].
   final double scale;
+
+  /// Current opacity of the ring border.
   final double opacity;
+
+  /// Colour of the ring border.
   final Color color;
+
+  /// Width of the ring border in logical pixels.
   final double strokeWidth;
 
+  /// Base diameter of the ring before scaling.
   static const double _ringBase = 120;
 
+  /// Renders a circular border with the current scale, opacity, and colour.
   @override
   Widget build(BuildContext context) {
     return Transform.scale(

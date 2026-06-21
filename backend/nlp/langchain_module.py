@@ -1,8 +1,24 @@
+"""
+langchain_module.py — Intent classification module for Sakhi AI.
+
+Classifies farmer queries into intent categories (price, disease, scheme,
+weather, sos, general) using the NVIDIA LLM. Uses keyword matching for
+SOS detection and LLM-based classification for all other intents.
+"""
+
+import os
+import sys
+
+# Add backend root to Python path for importing langsmith_setup
+_backend_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _backend_root)
+
 import langsmith_setup  # noqa: F401
 from langsmith import traceable
 
-from llm_module import generate_text
+from nlp.llm_module import generate_text
 
+# All supported intent categories
 INTENTS = ["price", "disease", "scheme", "weather", "sos", "general"]
 
 _project = langsmith_setup.LANGSMITH_PROJECT
@@ -16,6 +32,17 @@ _trace_tags = ["sakhi-ai", "intent-classifier"]
     tags=_trace_tags,
 )
 def classify_intent(query: str) -> str:
+    """
+    Classifies a farmer's query into one of the supported intent categories.
+    Uses keyword matching for SOS detection (fast path), then LLM for all others.
+
+    Args:
+        query: The farmer's text query.
+
+    Returns:
+        One of: 'price', 'disease', 'scheme', 'weather', 'sos', 'general'.
+    """
+    # Fast-path SOS detection using keyword matching (no LLM call needed)
     sos_keywords = [
         "help", "danger", "unsafe", "scared", "attack",
         "bachao", "madad", "darr", "khatra", "emergency",
@@ -25,6 +52,7 @@ def classify_intent(query: str) -> str:
     if any(word in query_lower for word in sos_keywords):
         return "sos"
 
+    # LLM-based intent classification prompt
     prompt = f"""
 You are an intent classifier for an agricultural assistant app for Indian farmers.
 
@@ -43,6 +71,7 @@ No explanation. No punctuation. Just the single word.
 """
 
     try:
+        # Use low temperature for deterministic classification
         intent = generate_text(
             prompt,
             temperature=0.1,

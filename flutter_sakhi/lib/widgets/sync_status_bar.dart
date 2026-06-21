@@ -1,10 +1,15 @@
+/// Offline-mode status bar pinned above the bottom navigation.
+///
+/// Displays a sync icon, a localized "Offline Mode" title, a short status
+/// message, an "OK" connectivity badge, and the last-synced timestamp.
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/l10n/app_language.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 
-/// Offline + last-sync strip pinned above the bottom navigation bar.
+/// A stateless widget that renders a styled card summarising the app's
+/// offline-readiness and the time of the last successful data sync.
 class SyncStatusBar extends StatelessWidget {
   const SyncStatusBar({
     super.key,
@@ -12,9 +17,13 @@ class SyncStatusBar extends StatelessWidget {
     required this.lastSyncedLabel,
   });
 
+  /// Localized strings for status messages and sync label.
   final AppStrings strings;
+
+  /// Human-readable label describing when the last sync occurred.
   final String lastSyncedLabel;
 
+  /// Builds the status card and the last-synced row beneath it.
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -149,6 +158,7 @@ class SyncStatusBar extends StatelessWidget {
     );
   }
 
+  /// Returns the localized "Offline Mode" title for the given [strings] language.
   String _offlineTitle(AppStrings strings) {
     return switch (strings.language) {
       AppLanguage.hindi => 'ऑफ़लाइन मोड',

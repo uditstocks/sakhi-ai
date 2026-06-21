@@ -1,3 +1,10 @@
+"""
+main.py — FastAPI entry point for Sakhi AI backend.
+
+Defines all HTTP endpoints: /chat, /voice, /diagnose, /mandi, /schemes, /sos, etc.
+Orchestrates the AI pipeline: intent classification → RAG search → LLM response → TTS.
+"""
+
 import langsmith_setup  # noqa: F401 — load LANGSMITH_* before traced imports
 
 from fastapi import FastAPI, UploadFile, File, Body
@@ -10,18 +17,20 @@ import uuid
 from langsmith import traceable
 
 # ── Import your modules ────────────────────────────────────────────
-from gemini_module import analyze_leaf_image
-from llm_module import ask_llm_with_intent
-from whisper_module import transcribe_audio
+from AI_services.gemini_module import analyze_leaf_image
+from nlp.llm_module import ask_llm_with_intent
+from AI_services.whisper_module import transcribe_audio
 from chromadb_module import search_documents
-from tts_module import text_to_speech
-from langchain_module import classify_intent
-from market_module import get_mandi_price
-from weather_module import get_weather
+from AI_services.tts_module import text_to_speech
+from nlp.langchain_module import classify_intent
+from external_APIs.market_module import get_mandi_price
+from external_APIs.weather_module import get_weather
 
 # ── App MUST be created before add_middleware ──────────────────────
+# Initialize the FastAPI application instance
 app = FastAPI()
 
+# Allow all origins for CORS (needed for cross-origin requests from Flutter/web)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,6 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Directory for uploaded audio/image files
 os.makedirs("uploads", exist_ok=True)
 
 _LANGSMITH_PROJECT = langsmith_setup.LANGSMITH_PROJECT
@@ -47,6 +57,10 @@ _TRACE_TAGS = ["sakhi-ai"]
     tags=_TRACE_TAGS,
 )
 def get_rag_context(query: str) -> str:
+    """
+    Retrieves relevant agricultural documents from ChromaDB for the given query.
+    Returns a concatenated string of top matching documents, or empty string if none found.
+    """
     try:
         results = search_documents(query)
         if not results:
@@ -64,6 +78,10 @@ def get_rag_context(query: str) -> str:
 
 
 def extract_crop_from_query(query: str) -> str:
+    """
+    Extracts the crop name from the user's query by matching against known crop keywords.
+    Maps Hindi/English crop names to a canonical English name. Defaults to 'wheat'.
+    """
     crops = {
         "wheat": "wheat", "gehoon": "wheat", "gehun": "wheat",
         "rice": "rice", "chawal": "rice", "dhan": "rice",
@@ -81,6 +99,10 @@ def extract_crop_from_query(query: str) -> str:
 
 
 def extract_location_from_query(query: str) -> str:
+    """
+    Extracts a city/location name from the user's query by matching against known Indian cities.
+    Returns the capitalized city name. Defaults to 'Lucknow'.
+    """
     cities = [
         "delhi", "mumbai", "pune", "lucknow", "patna",
         "jaipur", "bhopal", "hyderabad", "nagpur", "chandigarh",
@@ -99,11 +121,16 @@ def extract_location_from_query(query: str) -> str:
 
 @app.get("/")
 def root():
+    """Root endpoint — confirms the server is running."""
     return {"message": "Sakhi AI Backend Running"}
 
 
 @app.get("/health")
 def health_check():
+    """
+    Health check endpoint — returns service status and LangSmith configuration.
+    Used by monitoring systems to verify the backend is operational.
+    """
     return {
         "status": "ok",
         "service": "Sakhi AI",
@@ -123,9 +150,17 @@ def health_check():
     tags=_TRACE_TAGS,
 )
 def process_chat(query: str, language: str) -> dict:
+    """
+    Processes a text chat query through the full AI pipeline:
+    1. Classify user intent (price, disease, scheme, weather, sos, general)
+    2. Fetch relevant context (RAG docs, live prices, or weather)
+    3. Generate LLM response with context
+    Returns a dict with intent, response text, and optional live data.
+    """
     intent = classify_intent(query)
     print(f"Intent: {intent}")
 
+    # SOS intent — return emergency response immediately
     if intent == "sos":
         return {
             "intent": "sos",
@@ -133,18 +168,21 @@ def process_chat(query: str, language: str) -> dict:
             "action": "TRIGGER_SOS",
         }
 
+    # Price intent — fetch live mandi prices and generate response
     if intent == "price":
         crop = extract_crop_from_query(query)
         live_price = get_mandi_price(crop)
         response = ask_llm_with_intent(query, live_price, intent, language)
         return {"intent": intent, "response": response, "live_data": live_price}
 
+    # Weather intent — fetch live weather data and generate response
     if intent == "weather":
         location = extract_location_from_query(query)
         live_weather = get_weather(location)
         response = ask_llm_with_intent(query, live_weather, intent, language)
         return {"intent": intent, "response": response, "live_data": live_weather}
 
+    # Default: use RAG context from ChromaDB for agricultural Q&A
     context = get_rag_context(query)
     response = ask_llm_with_intent(query, context, intent, language)
     return {"intent": intent, "response": response}
@@ -152,6 +190,10 @@ def process_chat(query: str, language: str) -> dict:
 
 @app.post("/chat")
 def chat(data: dict = Body(...)):
+    """
+    POST /chat — accepts JSON with 'query' (text) and optional 'language' code.
+    Returns AI-generated text response based on classified intent.
+    """
     try:
         query = data.get("query", "").strip()
         language = data.get("language", "hi")
@@ -181,10 +223,15 @@ def chat(data: dict = Body(...)):
     tags=_TRACE_TAGS,
 )
 def process_voice(transcription: str, language: str) -> dict:
-    """Build voice response payload; caller converts to MP3 Response when needed."""
+    """
+    Processes a transcribed voice query through the AI pipeline.
+    Same logic as process_chat but operates on already-transcribed text.
+    Returns a dict with intent, transcription, response text, and optional action.
+    """
     intent = classify_intent(transcription)
     print(f"Intent: {intent}")
 
+    # SOS intent — return emergency response immediately
     if intent == "sos":
         sos_text = "Aapka SOS alert bheja ja raha hai. Aap safe rahein, madad aa rahi hai."
         return {
@@ -194,6 +241,7 @@ def process_voice(transcription: str, language: str) -> dict:
             "action": "TRIGGER_SOS",
         }
 
+    # Price intent — fetch live mandi prices
     if intent == "price":
         crop = extract_crop_from_query(transcription)
         context = get_mandi_price(crop)
@@ -204,6 +252,7 @@ def process_voice(transcription: str, language: str) -> dict:
             "response": response_text,
         }
 
+    # Weather intent — fetch live weather data
     if intent == "weather":
         location = extract_location_from_query(transcription)
         context = get_weather(location)
@@ -214,6 +263,7 @@ def process_voice(transcription: str, language: str) -> dict:
             "response": response_text,
         }
 
+    # Default: use RAG context from ChromaDB
     context = get_rag_context(transcription)
     response_text = ask_llm_with_intent(transcription, context, intent, language)
     return {
@@ -224,7 +274,10 @@ def process_voice(transcription: str, language: str) -> dict:
 
 
 def _voice_audio_response(payload: dict, language: str):
-    """Turn process_voice payload into MP3 or JSON HTTP response."""
+    """
+    Converts the voice response payload into an MP3 audio Response.
+    If TTS fails, falls back to returning the JSON payload directly.
+    """
     response_text = payload.get("response", "")
     audio_bytes = text_to_speech(response_text, language_code=language)
     if audio_bytes:
@@ -236,12 +289,19 @@ def _voice_audio_response(payload: dict, language: str):
 
 @app.post("/voice")
 async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
+    """
+    POST /voice — accepts an audio file upload (m4a, wav, etc.) and optional language code.
+    Transcribes audio → classifies intent → generates response → converts to MP3 audio.
+    Returns an MP3 audio response or JSON fallback.
+    """
     ext = os.path.splitext(file.filename)[1] or ".m4a"
     file_path = f"uploads/{uuid.uuid4()}{ext}"
 
+    # Save uploaded audio file to disk
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    # Transcribe audio using Whisper
     transcription = transcribe_audio(file_path)
     print(f"Transcription: {transcription}")
 
@@ -251,6 +311,7 @@ async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
             content={"error": "Could not transcribe audio"},
         )
 
+    # Process transcription through AI pipeline and convert to audio
     payload = process_voice(
         transcription,
         language,
@@ -270,17 +331,28 @@ async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
     tags=_TRACE_TAGS,
 )
 def process_diagnose(file_path: str, language: str) -> str:
+    """
+    Analyzes a leaf image for disease diagnosis using Gemini Vision.
+    Returns the diagnosis text in the specified language.
+    """
     return analyze_leaf_image(file_path, language=language)
 
 
 @app.post("/diagnose")
 async def diagnose_crop(file: UploadFile = File(...), language: str = "hi"):
+    """
+    POST /diagnose — accepts a leaf image upload and optional language code.
+    Analyzes the image for crop disease → generates diagnosis → converts to MP3 audio.
+    Returns an MP3 audio response or JSON fallback.
+    """
     ext = os.path.splitext(file.filename)[1] or ".jpg"
     file_path = f"uploads/{uuid.uuid4()}{ext}"
 
+    # Save uploaded image to disk
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    # Run vision-based diagnosis and convert to audio
     diagnosis = process_diagnose(
         file_path,
         language,
@@ -299,6 +371,10 @@ async def diagnose_crop(file: UploadFile = File(...), language: str = "hi"):
 
 @app.get("/mandi")
 def mandi_prices(crop: str = "wheat", state: str = "UP"):
+    """
+    GET /mandi — fetches live mandi (market) prices for a given crop and state.
+    Returns price data from the government API.
+    """
     try:
         price_data = get_mandi_price(crop)
         return {"prices": [{"crop": crop, "state": state, "data": price_data}]}
@@ -312,6 +388,10 @@ def mandi_prices(crop: str = "wheat", state: str = "UP"):
 
 @app.get("/schemes")
 def govt_schemes(state: str = "UP"):
+    """
+    GET /schemes — returns a static list of major Indian government agricultural schemes.
+    Includes PM-KISAN, PMFBY (crop insurance), and Kisan Credit Card.
+    """
     schemes = [
         {
             "name": "PM-KISAN",
@@ -347,6 +427,10 @@ def govt_schemes(state: str = "UP"):
 
 @app.post("/sos")
 def sos_alert(data: dict = Body(...)):
+    """
+    POST /sos — receives an emergency SOS alert with GPS coordinates and message.
+    Logs the alert and returns confirmation. TODO: integrate with WhatsApp Cloud API.
+    """
     lat = data.get("latitude")
     lng = data.get("longitude")
     message = data.get("message", "SOS - Madad chahiye!")
@@ -365,6 +449,10 @@ def sos_alert(data: dict = Body(...)):
 
 @app.get("/sync-status")
 def sync_status():
+    """
+    GET /sync-status — returns the current data sync status.
+    Used by the frontend to show whether the backend is online and data is fresh.
+    """
     return {
         "last_sync_ago": "Just now",
         "status": "online",
@@ -379,6 +467,10 @@ def sync_status():
 
 @app.get("/rag-query")
 def rag_query(query: str):
+    """
+    GET /rag-query — debug endpoint that returns raw ChromaDB search results.
+    Useful for testing RAG retrieval without going through the full chat pipeline.
+    """
     try:
         return search_documents(query)
     except Exception as e:

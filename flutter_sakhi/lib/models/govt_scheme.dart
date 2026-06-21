@@ -1,4 +1,9 @@
+/// Data model for a government agricultural scheme.
+///
+/// Represents a scheme with an ID, name, summary, and optional state and
+/// eligibility fields. Supports deserialization from JSON via [fromJson].
 class GovtScheme {
+  /// Creates a [GovtScheme] with the given required and optional fields.
   const GovtScheme({
     required this.id,
     required this.name,
@@ -13,6 +18,10 @@ class GovtScheme {
   final String? state;
   final String? eligibility;
 
+  /// Deserializes a [GovtScheme] from a JSON map.
+  ///
+  /// Handles flexible field names (e.g., `id`/`_id`, `name`/`title`,
+  /// `summary`/`description`) to accommodate different backend response formats.
   factory GovtScheme.fromJson(Map<String, dynamic> json) {
     return GovtScheme(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',

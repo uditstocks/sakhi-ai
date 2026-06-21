@@ -1,3 +1,7 @@
+/// SOS emergency tab panel.
+///
+/// Displays emergency helpline numbers (ambulance, police, women) with
+/// tap-to-call functionality using [url_launcher].
 import 'package:flutter/material.dart';
 import 'package:sakhi_ai/data/india_helplines.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
@@ -6,11 +10,19 @@ import 'package:sakhi_ai/theme/sakhi_colors.dart';
 import 'package:sakhi_ai/theme/sakhi_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Stateless widget that renders the SOS emergency panel.
+///
+/// Shows a red gradient header with an emergency icon and a list of
+/// helpline cards. Each card displays contact numbers that can be tapped
+/// to initiate a phone call.
 class SosTabPanel extends StatelessWidget {
   const SosTabPanel({super.key, required this.strings});
 
   final AppStrings strings;
 
+  /// Initiates a phone call to the given [number] using the `tel:` URI scheme.
+  ///
+  /// Shows a snackbar if the device cannot place the call.
   Future<void> _callNumber(BuildContext context, String number) async {
     final uri = Uri(scheme: 'tel', path: number);
     if (await canLaunchUrl(uri)) {
@@ -22,6 +34,8 @@ class SosTabPanel extends StatelessWidget {
     }
   }
 
+  /// Builds the SOS panel: a red gradient header card and a list of
+  /// helpline contact cards rendered from [kIndiaHelplines].
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -95,6 +109,10 @@ class SosTabPanel extends StatelessWidget {
   }
 }
 
+/// Card widget displaying a single emergency helpline contact.
+///
+/// Renders the contact's icon, emoji, label, and a row of tappable phone
+/// number chips that trigger a call when pressed.
 class _HelplineCard extends StatelessWidget {
   const _HelplineCard({
     required this.contact,
@@ -108,6 +126,8 @@ class _HelplineCard extends StatelessWidget {
   final String callLabel;
   final void Function(String number) onCall;
 
+  /// Builds the helpline card: an icon badge, contact label, and tappable
+  /// phone number chips for each contact number.
   @override
   Widget build(BuildContext context) {
     return Container(
