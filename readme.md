@@ -1,41 +1,46 @@
-#  Sakhi AI
+# Sakhi AI
 
-> **An AI-powered voice assistant for Indian farmers** - crop disease detection, mandi prices, weather, government schemes, and emergency SOS, all in Hindi and regional languages.
+> An AI-powered voice assistant for Indian farmers — crop disease detection, mandi prices, weather, government schemes, and emergency SOS, in Hindi and six regional languages.
 
 ---
 
 ## What is Sakhi AI?
 
-Sakhi AI is a multilingual agricultural assistant built for rural and semi-urban farmers across India. It removes the language and literacy barrier between farmers and critical farming information by supporting voice input, regional language output, and offline-friendly design.
+Sakhi AI is a multilingual agricultural assistant built for rural and semi-urban farmers across India. It removes the language and literacy barrier between farmers and critical farming information by supporting voice input, regional language output, and a retrieval-grounded knowledge base built on verified agricultural sources.
+
+The project consists of a FastAPI backend and a Flutter mobile application.
 
 **Core capabilities:**
 
--  **Crop disease detection** - description of crop disease 
--  **Voice chat** - speak in Hindi/Marathi/Punjabi, get spoken answers back
--  **Live mandi prices** - real-time crop prices from local mandis
--  **Government schemes** - PM-KISAN, PMFBY, Kisan Credit Card info
--  **SOS alerts** - one-tap emergency alert with GPS location
+- **Crop disease detection** — photograph a leaf and receive a diagnosis with treatment guidance, spoken back in the farmer's language
+- **Voice chat** — speak in Hindi or a regional language, get a spoken answer back
+- **Live mandi prices** — real-time crop prices by state and commodity
+- **Government schemes** — information on PM-KISAN, PMFBY, Kisan Credit Card, and related programs
+- **Agricultural knowledge base** — answers grounded in ingested ICAR documents via retrieval-augmented generation
+- **SOS alerts** — emergency alert endpoint with GPS coordinates
 
 ---
 
 ## Architecture Overview
 
 ```
-Sakhi App (mobile / web)
+Sakhi App (Flutter — frontend/)
         │
         │  HTTPS
         ▼
-┌──────────────────────────────┐
-│   LangChain\FastAPI Backend (main.py)  │
-│   + LangSmith tracing        │
-└──────┬───────────────────────┘
+┌────────────────────────────────────────┐
+│   FastAPI Backend (backend/main.py)     │
+│   + LangSmith tracing                   │
+└──────┬───────────────────────────────────┘
        │
-       ├── /chat      → Intent classify → RAG (ChromaDB) → LLM
-       ├── /voice     → Whisper STT → Intent → LLM → TTS (mp3)
-       
-       ├── /mandi     → Mandi price API
-       ├── /schemes   → Static scheme data
-       └── /sos       → alert
+       ├── /chat        → Intent classify (LangChain) → RAG (ChromaDB) → LLM (NVIDIA Llama 3.1)
+       ├── /voice        → Whisper STT → Intent → LLM → TTS (mp3)
+       ├── /diagnose      → Gemini Vision → diagnosis → TTS (mp3)
+       ├── /mandi        → Mandi price API (data.gov.in)
+       ├── /schemes      → Static scheme data
+       ├── /sos          → Emergency alert logging
+       ├── /rag-query      → Direct ChromaDB retrieval (debug / internal)
+       └── /sync-status      → Cache status (currently a stub)
 ```
 
 ---
@@ -44,15 +49,16 @@ Sakhi App (mobile / web)
 
 | Layer | Technology |
 |---|---|
-| **API framework** | FastAPI + Uvicorn + LangChain |
-| **Disease detection** | LLaMA 3.2 Vision 11B (self-hosted via Ollama) |
-| **Speech-to-text** | OpenAI Whisper |
-| **Text-to-speech** | TTS module (Hindi/regional) |
-| **LLM (chat)** | LLM module with intent routing |
-| **Vector DB / RAG** | ChromaDB |
-| **Intent classification** | LangChain |
-| **Observability** | LangSmith |
-| **Caching** | Redis |
+| API framework | FastAPI + Uvicorn |
+| Mobile app | Flutter (Dart) |
+| Disease detection (vision) | Google Gemini 2.5 Flash, via `google-genai` |
+| Chat LLM | NVIDIA Llama 3.1 8B |
+| Speech-to-text | faster-whisper |
+| Text-to-speech | Google Cloud Text-to-Speech |
+| Vector DB / RAG | ChromaDB with sentence-transformers embeddings |
+| Intent classification | LangChain |
+| Observability | LangSmith |
+| Document ingestion | Custom pipeline for ICAR PDF and text sources |
 
 ---
 
@@ -60,21 +66,29 @@ Sakhi App (mobile / web)
 
 ```
 sakhi-ai/
-├── main.py                  # FastAPI app — all endpoints
-├── llama_vision_module.py   # LLaMA 3.2 Vision disease detection
-├── gemini_module.py         # (legacy) Gemini vision — replaced by llama
-├── llm_module.py            # LLM chat with intent-aware prompting
-├── whisper_module.py        # Audio transcription (Whisper)
-├── tts_module.py            # Text-to-speech (Hindi + regional)
-├── chromadb_module.py       # RAG vector search
-├── langchain_module.py      # Intent classifier
-├── market_module.py         # Mandi price fetcher
-├── weather_module.py        # Weather API wrapper
-├── langsmith_setup.py       # LangSmith tracing config
-├── setup_llama_vision.sh    # One-time Ollama + model setup
-├── uploads/                 # Temp image/audio uploads
-└── requirements.txt
+├── backend/
+│   ├── main.py                  # FastAPI app — all route handlers
+│   ├── langsmith_setup.py       # LangSmith tracing config (import first)
+│   ├── chromadb_module.py       # RAG vector store and retrieval
+│   ├── AI_services/
+│   │   ├── gemini_module.py     # Crop disease diagnosis via Gemini Vision
+│   │   ├── tts_module.py        # Text-to-speech, 7 languages
+│   │   └── whisper_module.py    # Speech-to-text
+│   ├── nlp/
+│   │   ├── langchain_module.py  # Intent classifier
+│   │   └── llm_module.py        # Chat generation via NVIDIA Llama 3.1
+│   ├── external_APIs/
+│   │   ├── market_module.py     # Mandi price fetcher
+│   │   └── weather_module.py    # Weather data wrapper
+│   ├── ingestion/
+│   │   ├── ingest.py            # Sample document seeding
+│   │   ├── ingest_icar.py       # ICAR PDF ingestion pipeline
+│   │   └── load_docs.py         # Bulk text document ingestion
+│   └── requirements.txt
+└── frontend/                    # Flutter application (active)
 ```
+
+> Note: the repository also contains a `flutter_sakhi/` directory at the root. This is a leftover from an earlier build and contains no source code — `frontend/` is the actively developed Flutter app.
 
 ---
 
@@ -83,65 +97,75 @@ sakhi-ai/
 ### Prerequisites
 
 - Python 3.10+
-- 16 GB RAM minimum (32 GB recommended for LLaMA 11B)
-- NVIDIA GPU with 16 GB VRAM (optional but recommended for vision)
+- Flutter SDK (stable channel)
+- API keys for: NVIDIA NIM (chat LLM), Google Gemini (vision), Google Cloud (text-to-speech), LangSmith (optional, for tracing)
 
-### 1. Clone and install
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/sakhi-ai.git
+git clone https://github.com/kan9667/sakhi-ai.git
 cd sakhi-ai
+```
+
+### 2. Backend setup
+
+```bash
+cd backend
 pip install -r requirements.txt
 ```
 
-### 2. Set up LLaMA 3.2 Vision (self-hosted)
-
-```bash
-chmod +x setup_llama_vision.sh
-./setup_llama_vision.sh
-```
-
-This installs [Ollama](https://ollama.com), pulls the `llama3.2-vision` 11B model (~8 GB), and starts the local inference server.
-
-### 3. Configure environment variables
-
-Create a `.env` file in the project root:
+Create a `.env` file inside `backend/`:
 
 ```env
-# LangSmith (observability)
-LANGSMITH_API_KEY=your_key_here
+# NVIDIA Llama 3.1 (chat LLM)
+LLM_KEY=your_nvidia_api_key
+
+# Google Gemini (crop disease vision)
+GEMINI_API_KEY=your_gemini_api_key
+
+# Google Cloud Text-to-Speech
+GOOGLE_APPLICATION_CREDENTIALS=gcloud_key.json
+
+# LangSmith (observability — optional)
+LANGSMITH_API_KEY=your_langsmith_key
 LANGSMITH_PROJECT=sakhi-ai
 LANGSMITH_TRACING_V2=true
-
-# LLaMA Vision (self-hosted)
-LLAMA_BACKEND=ollama           # or "vllm" for production
-OLLAMA_URL=http://localhost:11434
-LLAMA_MODEL=llama3.2-vision
-LLAMA_TIMEOUT=60
-
-# Optional: vLLM (production inference)
-VLLM_URL=http://localhost:8000
 ```
 
-### 4. Start the server
+Start the backend:
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+uvicorn main:app --reload
 ```
 
-Visit `http://localhost:8080/health` to verify everything is running.
+By default this serves on `http://localhost:8000`. Visit `/health` to confirm the service is running.
+
+### 3. Frontend setup
+
+```bash
+cd frontend
+flutter pub get
+flutter run
+```
+
+For a web build:
+
+```bash
+flutter build web --release
+```
 
 ---
 
 ## API Reference
 
-### `GET /health`
-Returns service status, LangSmith config, and vision backend info.
+### `GET /`
+Root endpoint — basic service metadata.
 
----
+### `GET /health`
+Returns service status and configuration info, including LangSmith tracing state.
 
 ### `POST /chat`
-Text-based query with intent routing.
+Text-based query with automatic intent routing.
 
 **Request body:**
 ```json
@@ -154,56 +178,42 @@ Text-based query with intent routing.
 **Response:**
 ```json
 {
-  "intent": "crop_disease",
+  "intent": "disease",
   "response": "Gehun mein pattaon ka peela hona..."
 }
 ```
-
----
 
 ### `POST /voice`
 Accepts an audio file, returns an MP3 audio response.
 
 ```bash
-curl -X POST http://localhost:8080/voice \
+curl -X POST http://localhost:8000/voice \
   -F "file=@query.m4a" \
   -F "language=hi" \
   --output response.mp3
 ```
 
----
-
 ### `POST /diagnose`
-Accepts a crop/leaf image, returns an MP3 audio diagnosis.
+Accepts a crop or leaf image, returns an MP3 audio diagnosis generated via Gemini Vision.
 
 ```bash
-curl -X POST http://localhost:8080/diagnose \
+curl -X POST http://localhost:8000/diagnose \
   -F "file=@leaf.jpg" \
   -F "language=hi" \
   --output diagnosis.mp3
 ```
 
-**Vision model behavior:**
-- Identifies disease name, visible symptoms, and recommended treatment
-- Responds in the specified regional language
-- Falls back gracefully if the model server is unavailable
+The model identifies the disease name, visible symptoms, and recommended treatment, and responds in the specified language.
 
----
+### `GET /mandi`
+Returns live mandi prices.
 
-### `GET /mandi?crop=wheat&state=UP`
-Returns live mandi prices for a crop and state.
+**Query parameters:** `crop` (default `"wheat"`), `state` (default `"UP"`)
 
----
+### `GET /schemes`
+Returns relevant government schemes.
 
-### `GET /weather?location=Lucknow`
-Returns a farmer-friendly weather summary.
-
----
-
-### `GET /schemes?state=UP`
-Returns relevant government schemes (PM-KISAN, PMFBY, KCC, etc.).
-
----
+**Query parameters:** `state` (default `"UP"`)
 
 ### `POST /sos`
 Registers an SOS alert with GPS coordinates.
@@ -217,18 +227,32 @@ Registers an SOS alert with GPS coordinates.
 }
 ```
 
+WhatsApp Cloud API delivery for SOS alerts is not yet implemented — this is tracked as a TODO in the codebase and listed under Roadmap below.
+
+### `GET /rag-query`
+Returns raw ChromaDB search results for a given query — documents, distances, metadata, and assembled context.
+
+This is an internal debugging endpoint for testing retrieval quality directly, not intended for end-user traffic. It returns unformatted vector search output rather than a generated answer.
+
+### `GET /sync-status`
+Returns cache and sync status information.
+
+This endpoint currently returns static placeholder values and does not reflect real backend state. It exists as a stub for a planned future feature.
+
 ---
 
 ## Intent Classification
 
-The `/chat` and `/voice` endpoints automatically classify user intent and route accordingly:
+The `/chat` and `/voice` endpoints classify each query into one of six intents and route accordingly:
 
 | Intent | Trigger examples | Routed to |
 |---|---|---|
 | `price` | "gehun ka bhav", "mandi rate" | Mandi API → LLM |
+| `disease` | descriptions of crop symptoms | RAG knowledge base → LLM |
+| `scheme` | "PM-KISAN kaise milega" | Scheme data → LLM |
 | `weather` | "kal barish hogi?", "mausam kaisa" | Weather API → LLM |
-| `sos` | Emergency keywords | SOS alert + WhatsApp |
-| `general` | All other queries | ChromaDB RAG → LLM |
+| `sos` | emergency keywords | SOS alert logging |
+| `general` | all other queries | ChromaDB RAG → LLM |
 
 ---
 
@@ -239,56 +263,45 @@ The `/chat` and `/voice` endpoints automatically classify user intent and route 
 | `hi` | Hindi |
 | `en` | English |
 | `mr` | Marathi |
-| `pa` | Punjabi |
+| `te` | Telugu |
+| `ta` | Tamil |
+| `kn` | Kannada |
+| `bn` | Bengali |
 
 ---
 
-## Switching Vision Backends
+## Agricultural Knowledge Base
 
-**Development (Ollama — easier setup):**
-```env
-LLAMA_BACKEND=ollama
-OLLAMA_URL=http://localhost:11434
-```
+Sakhi AI's general and disease-related answers are grounded in a retrieval-augmented generation pipeline built on ChromaDB:
 
-**Production (vLLM — better throughput):**
-```env
-LLAMA_BACKEND=vllm
-VLLM_URL=http://localhost:8000
-```
-
-No code changes needed — just update the env var and restart.
+- ICAR PDF guides are ingested via `ingest_icar.py`, which extracts text, chunks it, and auto-tags it by crop, disease, fertilizer, and irrigation keywords
+- `load_docs.py` ingests plain-text agricultural documents in bulk
+- `ingest.py` seeds a small sample dataset for local development and testing
+- Retrieval uses sentence-transformer embeddings, returning the most relevant document chunks for each query before generation
 
 ---
 
 ## Observability
 
-All endpoints are traced with [LangSmith](https://smith.langchain.com):
-
-| Trace name | Type | Endpoint |
-|---|---|---|
-| `sakhi_chat` | chain | `/chat` |
-| `sakhi_voice` | chain | `/voice` |
-| `sakhi_diagnose` | chain | `/diagnose` |
-| `sakhi_rag_search` | retriever | internal |
-
-Set `LANGSMITH_API_KEY` and `LANGSMITH_PROJECT` in your `.env` to enable.
+Backend operations are traced with [LangSmith](https://smith.langchain.com) when configured. Set `LANGSMITH_API_KEY` and `LANGSMITH_PROJECT` in your `.env` to enable tracing across the chat, voice, and diagnosis pipelines.
 
 ---
 
 ## Roadmap
 
-- [ ] WhatsApp Cloud API integration for SOS alerts
-- [ ] Offline mode with cached model responses
-- [ ] Expand language support (Bengali, Telugu, Gujarati)
-- [ ] Fine-tune LLaMA on Indian crop disease dataset
-- [ ] Android app with on-device Whisper STT
+- [ ] Complete WhatsApp Cloud API integration for SOS alerts (currently a TODO in `main.py`)
+- [ ] Replace `/sync-status` stub with real cache and sync state reporting
+- [ ] Restrict or formalize `/rag-query` as a proper internal/admin-only endpoint
+- [ ] Offline mode with cached responses for low-connectivity areas
+- [ ] Expand language support beyond the current seven
+- [ ] Native Android build with on-device speech-to-text
+- [ ] Remove the unused legacy `flutter_sakhi/` directory
 
 ---
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you'd like to change.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ---
 
