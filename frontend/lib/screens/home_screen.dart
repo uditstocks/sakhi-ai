@@ -146,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (path == null) {
       _setStatus('Recording failed. Try again.');
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
       return;
     }
 
@@ -167,11 +167,21 @@ class _HomeScreenState extends State<HomeScreen> {
         languageCode: _language.code,
       );
 
-      // Play audio response or show error
+      // An SOS spoken into the mic switches straight to the SOS tab so the
+      // user sees the emergency helplines immediately.
+      if (result.isSosAction && mounted) {
+        setState(() => _navTab = SakhiNavTab.sos);
+      }
+
+      // Play audio response, fall back to text, or show an error.
       final audioBytes = result.audioBytes;
+      final responseText = result.responseText;
       if (audioBytes != null && audioBytes.isNotEmpty) {
         await _player.playBytes(audioBytes);
         _setStatus('');
+      } else if (responseText != null && responseText.isNotEmpty) {
+        // Pipeline succeeded but TTS produced no audio — show the text answer.
+        _setStatus(responseText);
       } else if (result.isNetworkError) {
         _setStatus('Internet nahi hai. Baad mein try karein.');
       } else if (result.isTranscriptionFailed) {
@@ -256,6 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
       SakhiNavTab.disease => DiseaseTabPanel(
           strings: _strings,
           api: _api,
+          language: _language,
         ),
       SakhiNavTab.schemes => SchemesTabPanel(
           strings: _strings,

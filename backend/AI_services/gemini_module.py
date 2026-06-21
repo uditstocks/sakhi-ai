@@ -20,6 +20,8 @@ from google import genai
 from langsmith import traceable
 from langsmith import wrappers
 
+from lang_config import get_llm_instruction
+
 # Vision-only module — text LLM calls live in llm_module.py (NVIDIA Nemotron).
 
 # Load environment variables from .env file in backend root directory
@@ -65,14 +67,9 @@ def analyze_leaf_image(image_path: str, language: str = "hi") -> str:
         A string with the diagnosis in simple language, or an error message if analysis fails.
     """
     try:
-        # Map language codes to instruction strings for the prompt
-        lang_instruction = {
-            "hi": "Answer in simple Hindi.",
-            "te": "Answer in simple Telugu.",
-            "mr": "Answer in simple Marathi.",
-            "ta": "Answer in simple Tamil.",
-            "en": "Answer in simple English.",
-        }.get(language, "Answer in simple Hindi.")
+        # Language instruction from the shared config — same source the TTS voice
+        # selection uses, so the spoken diagnosis matches the requested language.
+        lang_instruction = get_llm_instruction(language)
 
         # System prompt instructs Gemini to act as an agricultural diagnosis assistant
         prompt = f"""

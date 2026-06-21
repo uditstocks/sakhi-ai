@@ -19,6 +19,8 @@ from langsmith import traceable
 from langsmith import wrappers
 from openai import OpenAI
 
+from lang_config import get_llm_instruction
+
 # Load environment variables from .env file in backend root directory
 dotenv_path = os.path.join(_backend_root, ".env")
 load_dotenv(dotenv_path)
@@ -193,14 +195,9 @@ def ask_llm_with_intent(
         intent, INTENT_SYSTEM_PROMPTS["general"]
     )
 
-    # Map language codes to instruction strings
-    lang_instruction = {
-        "hi": "Answer in simple Hindi.",
-        "te": "Answer in simple Telugu.",
-        "mr": "Answer in simple Marathi.",
-        "ta": "Answer in simple Tamil.",
-        "en": "Answer in simple English.",
-    }.get(language, "Answer in simple Hindi.")
+    # Language instruction from the shared config — covers every language the
+    # app exposes, so the text matches the TTS voice that will speak it.
+    lang_instruction = get_llm_instruction(language)
 
     prompt = f"""
 {system_prompt}

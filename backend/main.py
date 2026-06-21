@@ -30,13 +30,23 @@ from external_APIs.weather_module import get_weather
 # Initialize the FastAPI application instance
 app = FastAPI()
 
-# Allow all origins for CORS (needed for cross-origin requests from Flutter/web)
+# CORS origins are configurable via the CORS_ALLOW_ORIGINS env var
+# (comma-separated). Default "*" suits local dev and native apps (which send
+# no Origin header). The wildcard + credentials combination is invalid per the
+# CORS spec and is rejected by browsers, so credentials are only enabled when
+# an explicit origin allow-list is provided.
+_origins_env = os.getenv("CORS_ALLOW_ORIGINS", "*").strip()
+_allow_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
+_allow_all = _allow_origins == ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_allow_origins,
+    allow_credentials=not _allow_all,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Custom headers the Flutter client reads off binary (audio) responses.
+    expose_headers=["X-Sakhi-Intent", "X-Sakhi-Action"],
 )
 
 # Directory for uploaded audio/image files
@@ -276,15 +286,31 @@ def process_voice(transcription: str, language: str) -> dict:
 def _voice_audio_response(payload: dict, language: str):
     """
     Converts the voice response payload into an MP3 audio Response.
-    If TTS fails, falls back to returning the JSON payload directly.
+
+    The classified intent and any action (e.g. TRIGGER_SOS) are returned in
+    response headers so the client can react — for example, opening the SOS
+    screen — even though the body is binary audio. Header values are ASCII-only
+    (intent/action codes), so no encoding is required.
+
+    If TTS fails, falls back to returning the JSON payload directly so the
+    client still receives the text response and any action.
     """
     response_text = payload.get("response", "")
     audio_bytes = text_to_speech(response_text, language_code=language)
+
     if audio_bytes:
-        return Response(content=audio_bytes, media_type="audio/mpeg")
-    if payload.get("action") == "TRIGGER_SOS":
-        return payload
-    return payload
+        headers = {"X-Sakhi-Intent": str(payload.get("intent", ""))}
+        action = payload.get("action")
+        if action:
+            headers["X-Sakhi-Action"] = str(action)
+        return Response(
+            content=audio_bytes,
+            media_type="audio/mpeg",
+            headers=headers,
+        )
+
+    # TTS unavailable — return JSON so the client keeps the text and the action.
+    return JSONResponse(content=payload)
 
 
 @app.post("/voice")
@@ -301,8 +327,8 @@ async def voice_chat(file: UploadFile = File(...), language: str = "hi"):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Transcribe audio using Whisper
-    transcription = transcribe_audio(file_path)
+    # Transcribe audio using Whisper, hinting the speaker's selected language
+    transcription = transcribe_audio(file_path, language=language)
     print(f"Transcription: {transcription}")
 
     if not transcription:
@@ -376,7 +402,7 @@ def mandi_prices(crop: str = "wheat", state: str = "UP"):
     Returns price data from the government API.
     """
     try:
-        price_data = get_mandi_price(crop)
+        price_data = get_mandi_price(crop, state)
         return {"prices": [{"crop": crop, "state": state, "data": price_data}]}
     except Exception as e:
         return {"prices": [], "error": str(e)}
