@@ -5,6 +5,7 @@ Fetches live crop prices from the Indian government's data.gov.in API.
 Supports Hindi/English crop name mapping and formats prices for farmer responses.
 """
 
+import os
 import requests
 
 
@@ -37,9 +38,13 @@ def get_mandi_price(crop: str, state: str = "Uttar Pradesh") -> str:
         api_crop = crop_map.get(crop_key, crop.capitalize())
 
         # Fetch prices from data.gov.in API
+        api_key = os.getenv("DATA_GOV_API_KEY")
+        if not api_key:
+            return "Market API key configured nahi hai. Admin se contact karein."
+
         url = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
         params = {
-            "api-key": "REDACTED_API_KEY",
+            "api-key": api_key,
             "format": "json",
             "filters[commodity]": api_crop,
             "filters[state]": state,
