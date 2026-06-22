@@ -7,6 +7,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sakhi_ai/l10n/app_language.dart';
 import 'package:sakhi_ai/l10n/app_strings.dart';
 import 'package:sakhi_ai/services/sakhi_api_service.dart';
 import 'package:sakhi_ai/services/audio_player_service.dart';
@@ -23,10 +24,12 @@ class DiseaseTabPanel extends StatefulWidget {
     super.key,
     required this.strings,
     required this.api,
+    required this.language,
   });
 
   final AppStrings strings;
   final SakhiApiService api;
+  final AppLanguage language;
 
   @override
   State<DiseaseTabPanel> createState() => _DiseaseTabPanelState();
@@ -86,7 +89,7 @@ class _DiseaseTabPanelState extends State<DiseaseTabPanel> {
       // Send image to backend
       final audioBytes = await widget.api.diagnoseCropImageBytes(
         imageBytes: imageBytes,
-        languageCode: 'hi',
+        languageCode: widget.language.code,
       );
 
       if (!mounted) return;

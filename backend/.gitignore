@@ -34,6 +34,12 @@ venv/
 ENV/
 
 # =====================
+# Runtime data (user uploads & generated vector store)
+# =====================
+uploads/
+chroma_db/
+
+# =====================
 # Flutter / Dart
 # =====================
 .flutter-plugins

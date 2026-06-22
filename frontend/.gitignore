@@ -27,6 +27,8 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+# Stray editor "Copy" of the tool cache that was committed by accident
+.dart_tool*/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/

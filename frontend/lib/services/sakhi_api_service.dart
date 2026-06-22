@@ -91,7 +91,11 @@ class SakhiApiService {
           await request.send().timeout(ApiConfig.receiveTimeout);
       final bodyBytes = await streamed.stream.toBytes();
 
-      return _parseVoiceResponse(streamed.statusCode, bodyBytes);
+      return _parseVoiceResponse(
+        streamed.statusCode,
+        bodyBytes,
+        streamed.headers,
+      );
     } catch (e) {
       print('sendVoiceFile error: $e');
       return const VoiceApiResult.networkError();
@@ -132,7 +136,11 @@ class SakhiApiService {
           await request.send().timeout(ApiConfig.receiveTimeout);
       final bodyBytes = await streamed.stream.toBytes();
 
-      return _parseVoiceResponse(streamed.statusCode, bodyBytes);
+      return _parseVoiceResponse(
+        streamed.statusCode,
+        bodyBytes,
+        streamed.headers,
+      );
     } catch (e) {
       print('sendVoiceBytes error: $e');
       return const VoiceApiResult.networkError();
@@ -143,32 +151,61 @@ class SakhiApiService {
   ///
   /// [statusCode] is the HTTP status code from the response.
   /// [bodyBytes] is the raw response body.
-  /// Returns a [VoiceApiResult] with audio bytes on success, or an error
-  /// describing transcription failure or server-side error.
-  VoiceApiResult _parseVoiceResponse(int statusCode, List<int> bodyBytes) {
-    final contentType = _looksLikeMp3(bodyBytes);
+  /// [headers] are the response headers (used to read `X-Sakhi-Intent` and
+  /// `X-Sakhi-Action` that the backend attaches to binary audio responses).
+  ///
+  /// Returns a [VoiceApiResult] with audio bytes on audio success. When the
+  /// backend's TTS is unavailable it returns the JSON text fallback as a
+  /// successful textual result (not an error), preserving any action.
+  VoiceApiResult _parseVoiceResponse(
+    int statusCode,
+    List<int> bodyBytes,
+    Map<String, String> headers,
+  ) {
+    // http lowercases header keys.
+    final intent = headers['x-sakhi-intent'];
+    final action = headers['x-sakhi-action'];
 
-    if (statusCode == 200 && contentType && bodyBytes.isNotEmpty) {
-      return VoiceApiResult(audioBytes: bodyBytes);
+    if (statusCode == 200 && _looksLikeMp3(bodyBytes) && bodyBytes.isNotEmpty) {
+      return VoiceApiResult(
+        audioBytes: bodyBytes,
+        intent: intent,
+        action: action,
+      );
     }
 
+    // Not audio — try to decode the JSON body (error or TTS-less text fallback).
     String? serverError;
+    String? responseText;
+    String? jsonAction = action;
+    String? jsonIntent = intent;
     try {
       final decoded = jsonDecode(utf8.decode(bodyBytes));
       if (decoded is Map<String, dynamic>) {
-        serverError = decoded['error'] as String? ??
-            decoded['response'] as String?;
+        serverError = decoded['error'] as String?;
+        responseText = decoded['response'] as String?;
+        jsonAction ??= decoded['action'] as String?;
+        jsonIntent ??= decoded['intent'] as String?;
       }
     } catch (_) {}
 
-    print('Voice API error $statusCode: ${utf8.decode(bodyBytes, allowMalformed: true)}');
+    print('Voice API $statusCode: ${utf8.decode(bodyBytes, allowMalformed: true)}');
 
     if (statusCode == 422 ||
         (serverError?.toLowerCase().contains('transcribe') ?? false)) {
       return const VoiceApiResult.transcriptionFailed();
     }
 
-    return VoiceApiResult(serverError: serverError);
+    // Successful pipeline but TTS produced no audio: surface the text answer.
+    if (statusCode == 200 && responseText != null && responseText.isNotEmpty) {
+      return VoiceApiResult(
+        responseText: responseText,
+        intent: jsonIntent,
+        action: jsonAction,
+      );
+    }
+
+    return VoiceApiResult(serverError: serverError ?? responseText);
   }
 
   /// Checks if the given bytes look like an MP3 file.
@@ -436,10 +473,6 @@ class SakhiApiService {
   // INTERNAL JSON DECODER
   // ─────────────────────────────────────────────
 
-  // ─────────────────────────────────────────────
-  // INTERNAL JSON DECODER
-  // ─────────────────────────────────────────────
-
   /// Decodes an HTTP response body as JSON.
   ///
   /// [response] is the HTTP response to decode.
@@ -467,24 +500,38 @@ class SakhiApiService {
 
 /// Result of a voice API call.
 ///
-/// On success, [audioBytes] contains the TTS audio response.
-/// On failure, [serverError] describes the error category:
+/// On audio success, [audioBytes] contains the TTS audio response. When the
+/// backend answered but TTS was unavailable, [responseText] holds the text.
+/// [intent] and [action] carry the classified intent and any follow-up action
+/// (e.g. `'TRIGGER_SOS'`). On failure, [serverError] describes the category:
 /// - `'network'` for connectivity issues
 /// - `'transcription'` for STT failures
 /// - any other string for server-reported errors.
 class VoiceApiResult {
-  /// Creates a result with either audio bytes or a server error message.
-  const VoiceApiResult({this.audioBytes, this.serverError});
+  /// Creates a result with audio bytes and/or text, plus optional intent/action.
+  const VoiceApiResult({
+    this.audioBytes,
+    this.serverError,
+    this.responseText,
+    this.intent,
+    this.action,
+  });
 
   /// Creates a result representing a network/connectivity error.
   const VoiceApiResult.networkError()
       : audioBytes = null,
-        serverError = 'network';
+        serverError = 'network',
+        responseText = null,
+        intent = null,
+        action = null;
 
   /// Creates a result representing a transcription failure.
   const VoiceApiResult.transcriptionFailed()
       : audioBytes = null,
-        serverError = 'transcription';
+        serverError = 'transcription',
+        responseText = null,
+        intent = null,
+        action = null;
 
   /// The raw audio bytes returned by the TTS backend, or `null` on error.
   final List<int>? audioBytes;
@@ -492,11 +539,23 @@ class VoiceApiResult {
   /// Error description, or `null` on success.
   final String? serverError;
 
+  /// Text answer when the backend succeeded but returned no audio.
+  final String? responseText;
+
+  /// Classified intent (e.g. `'price'`, `'sos'`), or `null` if unknown.
+  final String? intent;
+
+  /// Follow-up action requested by the backend (e.g. `'TRIGGER_SOS'`).
+  final String? action;
+
   /// Whether this result represents a network error.
   bool get isNetworkError => serverError == 'network';
 
   /// Whether this result represents a transcription failure.
   bool get isTranscriptionFailed => serverError == 'transcription';
+
+  /// Whether the backend asked the app to trigger the SOS flow.
+  bool get isSosAction => action == 'TRIGGER_SOS';
 }
 
 /// Exception thrown when the Sakhi API returns a non-2xx HTTP response.
