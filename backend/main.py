@@ -30,10 +30,12 @@ from external_APIs.weather_module import get_weather
 # Initialize the FastAPI application instance
 app = FastAPI()
 
-# Allow all origins for CORS (needed for cross-origin requests from Flutter/web)
+# CORS — load allowed origins from env (comma-separated), default to localhost for dev
+_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
