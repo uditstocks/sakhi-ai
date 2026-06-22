@@ -1,1 +1,24 @@
 flutter_sakhi/lib/services/gcloud_key.json
+
+# User uploads (voice recordings, images) — PII
+backend/uploads/
+
+# ChromaDB vector database
+backend/chroma_db/
+
+# Build artifacts
+__pycache__/
+*.pyc
+*.pyo
+
+# SQLite databases
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
